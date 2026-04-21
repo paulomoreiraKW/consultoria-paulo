@@ -4,8 +4,8 @@ import urllib.parse
 import os
 import base64
 
-# --- 1. CONFIGURAÇÃO DE ELITE ---
-st.set_page_config(page_title="PM 5D+ | Asset Intelligence", layout="wide")
+# --- CONFIGURAÇÃO (Mantendo o teu padrão) ---
+st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
 def get_base64(bin_file):
     if os.path.exists(bin_file):
@@ -13,118 +13,90 @@ def get_base64(bin_file):
             return base64.b64encode(f.read()).decode()
     return ""
 
-# Assets (Garante que os nomes dos ficheiros no GitHub são estes)
 fundo_marmore = get_base64("Background.svg")
-logo_paulo = "Paulo Moreira Consultoria & Gestão.png"
 
-# --- 2. CSS SOBERANO (Design de Decisão) ---
+# --- CSS (Preservando a tua Identidade Visual) ---
 st.markdown(f"""
     <style>
     .stApp {{ background-image: url("data:image/svg+xml;base64,{fundo_marmore}"); background-size: cover; background-attachment: fixed; }}
-    .card-5d {{
-        background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 15px;
-        border-left: 10px solid #bfa573; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        margin-bottom: 25px; color: #1a1a1a;
+    .main-protection-card {{
+        background-color: rgba(253, 250, 245, 0.99); padding: 25px 35px;
+        border-radius: 15px; border-left: 8px solid #bfa573;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15); margin-bottom: 15px;
     }}
-    .badge-status {{ background: #bfa573; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }}
-    .metric-title {{ font-size: 12px; color: #666; font-weight: bold; text-transform: uppercase; }}
-    .metric-value {{ font-size: 20px; color: #bfa573; font-weight: bold; }}
+    .white-solid-box {{
+        background-color: #ffffff; padding: 20px; border-radius: 10px;
+        border-bottom: 3px solid #bfa573; margin-bottom: 15px;
+    }}
+    /* Estilo para os novos cards de imóveis */
+    .card-5d {{
+        background: #ffffff; padding: 20px; border-radius: 12px;
+        border-left: 10px solid #bfa573; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        margin-bottom: 20px; color: #1a1a1a;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. LOGICA DE NEGÓCIO (Funções do Solo Agent) ---
-def get_badge(status):
-    mapping = {
-        "Novo": "🆕 Novo no mercado",
-        "Em Analise": "🔍 Em análise 5D",
-        "Validado": "✅ Oportunidade Validada",
-        "Destaque": "⭐ Destaque Investidor"
-    }
-    return mapping.get(status, "🔍 Sob Análise")
+# 1. LOGO E CABEÇALHO ORIGINAIS
+if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
+    st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
 
-def mostrar_alertas(row):
-    alertas = []
-    if row['Area_Bruta'] == row['Area_Terreno']:
-        alertas.append("Verificar coerência entre área bruta e terreno (Nota Técnica)")
-    if "recuperar" in str(row['Estado']).lower():
-        alertas.append("Ponto de Validação: Necessário orçamento de CAPEX")
-    
-    if alertas:
-        with st.expander("⚠️ Notas de Inteligência Técnica"):
-            for a in alertas:
-                st.info(a)
+# 2. OS TEUS FORMULÁRIOS E LINKS (INTACTOS)
+st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
+col_app, col_cred = st.columns(2)
 
-# --- 4. ENGINE DE DADOS ---
-def main():
-    if os.path.exists(logo_paulo):
-        st.image(logo_paulo, use_container_width=True)
+with col_app:
+    st.markdown(f"""<div class="white-solid-box">
+        <span style="font-weight:bold;">📱 KW App</span><br>
+        <span style="font-size:13px;">Aceda ao mercado imobiliário em tempo real.</span><br><br>
+        <a href="https://app.kwportugal.pt/KW2S9I4P" style="color:#bfa573; font-weight:bold; text-decoration:none;">Descarregar App</a>
+    </div>""", unsafe_allow_html=True)
 
-    # Link da tua Sheet Blindada
+with col_cred:
+    st.markdown(f"""<div class="white-solid-box">
+        <span style="font-weight:bold;">🏦 Gestão de Crédito</span><br>
+        <span style="font-size:13px;">Intermediação certificada para financiamento.</span><br><br>
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform" style="color:#bfa573; font-weight:bold; text-decoration:none;">Simular Crédito</a>
+    </div>""", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# 3. O MÓDULO DE DADOS (SCANNER 5D) - A ADIÇÃO "8K"
+st.markdown("<h3 style='text-align:center; color:#1a1a1a;'>🚀 Ativos Selecionados 5D+</h3>", unsafe_allow_html=True)
+
+try:
     SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
     URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
-
-    try:
-        df = pd.read_csv(URL)
-    except:
-        st.error("Erro na ligação à Base de Dados. Verifica a partilha da Sheet.")
-        return
-
-    st.title("🚀 Intelligence Scanner 5D+")
+    df = pd.read_csv(URL)
     
-    # Filtro de Escassez (Só mostra Score >= 3)
-    df = df[df['Score_PM5D'] >= 3]
-
-    for index, row in df.iterrows():
+    # Filtro: Apenas o que decidires na Sheet (Score >= 3)
+    df_filtered = df[df['Score_PM5D'] >= 3]
+    
+    for _, row in df_filtered.iterrows():
         with st.container():
-            st.markdown(f'<div class="card-5d">', unsafe_allow_html=True)
+            st.markdown(f'''
+            <div class="card-5d">
+                <h4 style="margin:0;">📍 {row['Localidade']} | Ref: {row['Referencia']}</h4>
+                <p style="font-size:14px; margin:5px 0;">Investimento Total: <b>{row['Investimento_Total']:,.0f}€</b> | ROI Est.: <b style="color:#bfa573;">{row['ROI_Percent']*100:.1f}%</b></p>
+            </div>
+            ''', unsafe_allow_html=True)
             
-            # Cabeçalho do Card
-            c1, c2 = st.columns([2, 1])
-            with c1:
-                st.markdown(f"<span class='badge-status'>{get_badge(row.get('Status', 'Novo'))}</span>", unsafe_allow_html=True)
-                st.subheader(f"📍 {row['Localidade']} | Ref: {row['Referencia']}")
-            
-            with c2:
-                score = int(row['Score_PM5D'])
-                st.write(f"**Score de Investimento**")
-                st.progress(score / 5)
-                if score >= 4: st.success("Potencial Elevado")
+            b1, b2 = st.columns(2)
+            with b1:
+                if pd.notna(row['Link_Fonte']):
+                    st.link_button("🌐 Ver na KW", row['Link_Fonte'], use_container_width=True)
+            with b2:
+                msg = f"Olá Paulo, quero o Deal Pack da Ref {row['Referencia']}"
+                st.link_button("📄 Pedir Deal Pack", f"https://wa.me/351911995695?text={urllib.parse.quote(msg)}", use_container_width=True)
 
-            # Conteúdo Central
-            col_img, col_metrics = st.columns([1, 2])
-            with col_img:
-                st.image("https://via.placeholder.com/400x300.png?text=IMÓVEL+IDENTIFICADO", use_container_width=True)
-                st.write(f"**Tipo:** {row['Tipo']}")
-            
-            with col_metrics:
-                # Dashboard de Resultados
-                m1, m2, m3 = st.columns(3)
-                m1.markdown(f"<span class='metric-title'>Inv. Total</span><br><span class='metric-value'>{row['Investimento_Total']:,.0f}€</span>", unsafe_allow_html=True)
-                m2.markdown(f"<span class='metric-title'>ROI Est. (Flip)</span><br><span class='metric-value'>{row['ROI_Percent']*100:.1f}%</span>", unsafe_allow_html=True)
-                m3.markdown(f"<span class='metric-title'>Rend. Anual</span><br><span class='metric-value'>{row['Yield_Euros_Ano']:,.0f}€</span>", unsafe_allow_html=True)
-                
-                # Alertas Técnicos (O teu diferencial)
-                mostrar_alertas(row)
+except Exception:
+    st.info("A atualizar listagem de ativos...")
 
-                # CTAs (Call to Actions)
-                st.write("---")
-                bt1, bt2 = st.columns(2)
-                
-                # Link para o anúncio original (KW) - Respeito ao colega
-                if 'Link_Fonte' in row:
-                    bt1.link_button("🌐 Ver Fonte Original", row['Link_Fonte'], use_container_width=True)
-                
-                # Lead Gen: O Botão do Relatório
-                msg = f"Olá Paulo! Quero o Relatório 5D da Ref {row['Referencia']}. O meu email é: "
-                bt2.link_button("📄 Receber Deal Pack PDF", f"https://wa.me/351911995695?text={urllib.parse.quote(msg)}", type="primary", use_container_width=True)
+# 4. RODAPÉ E CONTACTOS ORIGINAIS (INTACTOS)
+st.write("<br>", unsafe_allow_html=True)
+ba, bb, bc = st.columns(3)
+with ba: st.link_button("⭐ Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
+with bb: st.link_button("📞 Ligar", "tel:+351911995695")
+with bc: st.link_button("🟢 Whatsapp", "https://wa.me/351911995695")
 
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    # Rodapé VIP
-    st.sidebar.title("💎 Área VIP")
-    st.sidebar.write("Receba as oportunidades 48h antes do mercado.")
-    if st.sidebar.button("Pedir Acesso Exclusivo"):
-        st.sidebar.success("Solicitação enviada para Paulo Moreira.")
-
-if __name__ == "__main__":
-    main()
+if os.path.exists("P.M.M..png"):
+    st.image("P.M.M..png", width=80)
