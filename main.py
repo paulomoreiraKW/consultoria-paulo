@@ -1,8 +1,11 @@
 import streamlit as st
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 import base64
 import os
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
+# --- 1. CONFIGURAÇÃO DA PÁGINA (ORIGINAL) ---
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
 def get_base64(bin_file):
@@ -11,9 +14,28 @@ def get_base64(bin_file):
             return base64.b64encode(f.read()).decode()
     return ""
 
+def get_kw_photo(url):
+    try:
+        if pd.isna(url) or url == "": return None
+        response = requests.get(url, timeout=5, headers={'User-Agent': 'Mozilla/5.0'})
+        soup = BeautifulSoup(response.text, 'html.parser')
+        img = soup.find('meta', property='og:image')
+        return img['content'] if img else None
+    except:
+        return None
+
+# --- 2. LÓGICA DE DADOS (SCANNER 5D INTEGRADO) ---
+try:
+    SHEET_URL = "https://docs.google.com/spreadsheets/d/1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag/export?format=csv"
+    df = pd.read_csv(SHEET_URL)
+    df['Score_PM5D'] = pd.to_numeric(df['Score_PM5D'], errors='coerce').fillna(0)
+    validos = df[df['Score_PM5D'] >= 3].copy()
+except:
+    validos = pd.DataFrame()
+
 fundo_marmore = get_base64("Background.svg")
 
-# --- CSS DE PRECISÃO FINAL ---
+# --- 3. CSS DE PRECISÃO FINAL (ADN PRESERVADO) ---
 st.markdown(f"""
     <style>
     .stApp {{
@@ -43,7 +65,6 @@ st.markdown(f"""
     .preview-window {{
         border: 2px dashed #bfa573;
         background-color: #ffffff;
-        padding: 20px;
         border-radius: 12px;
         text-align: center;
         color: #bfa573;
@@ -51,6 +72,8 @@ st.markdown(f"""
         min-height: 250px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         box-shadow: inset 0 0 20px rgba(191, 165, 115, 0.08);
+        position: relative;
+        overflow: hidden;
     }}
 
     .service-box {{
@@ -112,8 +135,7 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONTEÚDO ---
-
+# --- 4. CONTEÚDO (IDENTIDADE) ---
 if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
     st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
 
@@ -142,13 +164,28 @@ with col_r:
         <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown("""<div class="preview-window">
-        <span style="font-size:40px;">🖼️</span>
-        <b style="font-size:18px;">Visualização Estratégica do Imóvel</b>
-        <span style="font-size:11px; font-weight:normal; color:#999; margin-top:10px;">Exemplo de Relatório de Análise 5D</span>
-    </div>""", unsafe_allow_html=True)
+    # JANELA DINÂMICA (SCANNER 5D)
+    if not validos.empty:
+        destaque = validos.iloc[0]
+        foto = destaque['Capa_Manual'] if pd.notna(destaque['Capa_Manual']) else get_kw_photo(destaque['Link_Fonte'])
+        st.markdown(f"""
+            <div class="preview-window">
+                <img src="{foto}" style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;">
+                <div style="position:relative; background:rgba(255,255,255,0.85); width:100%; margin-top:160px; padding:10px; border-top:1px solid #bfa573;">
+                    <b style="font-size:14px; color:#1a1a1a;">SCANNER 5D: {destaque['Localidade']}</b><br>
+                    <span style="font-size:11px; color:#bfa573;">ROI {destaque['ROI_Percent']} | Yield {destaque['Yield_Euros_Ano']}</span>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""<div class="preview-window">
+            <span style="font-size:40px;">🖼️</span>
+            <b style="font-size:18px;">Visualização Estratégica do Imóvel</b>
+            <span style="font-size:11px; font-weight:normal; color:#999; margin-top:10px;">Sincronizando Scanner 5D...</span>
+        </div>""", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
+# --- 5. SERVIÇOS (ORIGINAL) ---
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 m1, m2 = st.columns(2)
 with m1:
@@ -176,7 +213,23 @@ with m2:
     </div>""", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 5. CONTACTOS (ALINHADOS EM 3 COLUNAS)
+# --- 6. MONTRA 5D (EXPANSÃO) ---
+if not validos.empty:
+    st.markdown("<h3 style='text-align:center; color:#1a1a1a; margin-top:20px;'>💎 Ativos Validados PM5D</h3>", unsafe_allow_html=True)
+    for _, row in validos.iterrows():
+        st.markdown('<div class="main-protection-card" style="background:white; border-left:4px solid #1a1a1a;">', unsafe_allow_html=True)
+        ca, cb = st.columns([1, 1.5])
+        with ca:
+            f_card = row['Capa_Manual'] if pd.notna(row['Capa_Manual']) else get_kw_photo(row['Link_Fonte'])
+            st.image(f_card if f_card else "https://via.placeholder.com/400")
+        with cb:
+            st.markdown(f"#### {row['Localidade']} | {row['Tipo']}")
+            st.write(f"**ROI:** {row['ROI_Percent']} | **Yield:** {row['Yield_Euros_Ano']}")
+            st.write(f"**Investimento:** {row['Investimento_Total']}")
+            st.link_button("📄 Pedir Deal Pack", f"https://wa.me/351911995695?text=Quero o Deal Pack do imóvel {row['Referencia']}")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# --- 7. CONTACTOS E RODAPÉ (ORIGINAL) ---
 st.write("<br>", unsafe_allow_html=True)
 ba, bb, bc = st.columns(3)
 with ba: st.link_button("⭐ Google Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
