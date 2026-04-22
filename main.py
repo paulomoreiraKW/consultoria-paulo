@@ -1,200 +1,153 @@
 import streamlit as st
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import urllib.parse
 import base64
 import os
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
+# [PBO-PM] - CONFIGURAÇÃO DE ELITE: PAULO MOREIRA 5D
+st.set_page_config(page_title="Paulo Moreira | Investimento 5D", layout="wide")
 
+# --- FUNÇÕES DE SUPORTE ---
 def get_base64(bin_file):
     if os.path.exists(bin_file):
         with open(bin_file, 'rb') as f:
             return base64.b64encode(f.read()).decode()
     return ""
 
-fundo_marmore = get_base64("Background.svg")
+def get_kw_photo(url):
+    try:
+        if pd.isna(url) or url == "": return None
+        response = requests.get(url, timeout=5, headers={'User-Agent': 'Mozilla/5.0'})
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # Procura a primeira imagem de imóvel no padrão KW
+        img = soup.find('meta', property='og:image')
+        return img['content'] if img else None
+    except:
+        return None
 
-# --- CSS DE PRECISÃO FINAL ---
+# --- ESTILO LUXO (MÁRMORE + BRANCO 0.99) ---
+fundo = get_base64("Background.svg")
 st.markdown(f"""
     <style>
     .stApp {{
-        background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
+        background-image: url("data:image/svg+xml;base64,{fundo}");
         background-size: cover;
         background-attachment: fixed;
     }}
-
-    .main-protection-card {{
-        background-color: rgba(253, 250, 245, 0.99);
-        padding: 25px 35px 10px 35px;
-        border-radius: 15px;
-        border-left: 8px solid #bfa573;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        margin-bottom: 10px; 
+    .main-card {{
+        background-color: rgba(255, 255, 255, 0.99);
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        border-left: 5px solid #bfa573;
     }}
-
-    .white-solid-box {{
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        border-bottom: 3px solid #bfa573;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }}
-
-    .preview-window {{
-        border: 2px dashed #bfa573;
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        text-align: center;
-        color: #bfa573;
-        font-weight: 600;
-        min-height: 250px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: inset 0 0 20px rgba(191, 165, 115, 0.08);
-    }}
-
-    .service-box {{
-        background-color: white;
-        padding: 18px;
-        border-radius: 10px;
-        border-bottom: 3px solid #bfa573;
-        margin-bottom: 15px;
-        min-height: 155px;
-        transition: transform 0.3s ease;
-    }}
-    .service-box:hover {{ transform: translateY(-5px); }}
-    .service-title {{ color: #1a1a1a; font-weight: 800; font-size: 15px; margin-bottom: 5px; display: block; }}
-    .service-desc {{ color: #555; font-size: 12.5px; line-height: 1.4; }}
-
-    .profile-frame {{
-        width: 180px; height: 180px;
-        border-radius: 50%; border: 4px solid #bfa573;
-        overflow: hidden; margin: 0 auto 15px auto;
+    .property-card {{
         background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #eee;
+        transition: 0.3s;
     }}
-    .profile-frame img {{ width: 100%; height: 100%; object-fit: cover; }}
-
-    .cargo-text {{ color: #1a1a1a !important; font-weight: 700 !important; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; }}
-    .quote-style {{ font-style: italic; color: #bfa573; font-size: 15px; margin: 10px 0; border-left: 2px solid #bfa573; padding-left: 10px; }}
-    .bio-text {{ font-size: 14px; color: #333; line-height: 1.5; }}
-
-    div.stButton > button {{
-        width: 100% !important;
-        height: 52px !important;
-        background-color: white !important;
-        color: #1a1a1a !important;
-        border: 1px solid #1a1a1a !important;
-        font-weight: 600 !important;
-        text-transform: none !important;
-        font-size: 14px !important;
-        margin-top: 5px;
-    }}
-    div.stButton > button:hover {{ background-color: #1a1a1a !important; color: white !important; }}
-
-    .action-link {{
-        display: inline-block;
-        padding: 8px 15px;
-        background: #1a1a1a;
-        color: white !important;
-        text-decoration: none !important;
-        border-radius: 2px;
-        font-size: 11px;
+    .property-card:hover {{ transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }}
+    .badge-5d {{
+        background: linear-gradient(135deg, #bfa573, #8a7345);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 50px;
         font-weight: bold;
-        margin-top: 10px;
-        text-transform: uppercase;
+        font-size: 12px;
     }}
-
-    .legal-footer-box {{
-        font-size: 11px; color: #444; text-align: center; padding: 25px;
-        background: rgba(253, 250, 245, 0.99); border-radius: 10px;
-        border: 1px dashed #bfa573; margin-top: 30px; line-height: 1.8;
-    }}
+    .roi-highlight {{ color: #bfa573; font-size: 24px; font-weight: bold; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- CONTEÚDO ---
+# --- CABEÇALHO (O JARDIM) ---
+col_logo, col_kw = st.columns([2, 1])
+with col_logo:
+    if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
+        st.image("Paulo Moreira Consultoria & Gestão.png", width=400)
+with col_kw:
+    if os.path.exists("area_feira.png"):
+        st.image("area_feira.png", width=180)
 
-if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
-    st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
-c1, c2, c3 = st.columns(3)
-with c1: st.link_button("🎯 Avaliar Imóvel", "https://www.kwportugal.pt/pt/property-valuation")
-with c2: st.link_button("🏦 Simular Crédito", "https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform")
-with c3: st.link_button("📲 App Pessoal KW", "https://app.kw.com/KWNVLOD5AW4")
+# --- CARREGAMENTO DE DADOS (CASCATA INTELIGENTE) ---
+SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
+URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-st.write("<br>", unsafe_allow_html=True)
+try:
+    df = pd.read_csv(URL)
+    # Limpeza e Blindagem (Ignora erros de divisão e scores baixos)
+    df['Score_PM5D'] = pd.to_numeric(df['Score_PM5D'], errors='coerce').fillna(0)
+    df_validos = df[df['Score_PM5D'] >= 3].copy()
+    
+    # --- JANELA DINÂMICA (CARROSSEL) ---
+    st.markdown("<h2 style='text-align:center; color:#333;'>💎 Oportunidades Seleccionadas 5D</h2>", unsafe_allow_html=True)
+    
+    with st.container():
+        # Lógica de Carrossel Simplificada (Cards em Destaque)
+        cols_destaque = st.columns(len(df_validos.head(3)))
+        for idx, (_, row) in enumerate(df_validos.head(3).iterrows()):
+            with cols_destaque[idx]:
+                # Prioridade de Foto: P (Capa_Manual) > Scraping > Placeholder
+                foto = row.get('Capa_Manual')
+                if pd.isna(foto) or foto == "":
+                    foto = get_kw_photo(row['Link_Fonte'])
+                if not foto: foto = "https://via.placeholder.com/600x400?text=Paulo+Moreira+5D"
+                
+                st.markdown(f"""
+                <div style="position:relative;">
+                    <img src="{foto}" style="width:100%; border-radius:15px; height:250px; object-fit:cover;">
+                    <div style="position:absolute; top:10px; right:10px;" class="badge-5d">SCORE {int(row['Score_PM5D'])}</div>
+                </div>
+                <p style="margin-top:10px; font-weight:bold; color:#bfa573;">{row['Tipo']} em {row['Localidade']}</p>
+                """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
-col_l, col_r = st.columns([1, 1.8])
+    # --- O INTERIOR (CARDS DETALHADOS) ---
+    st.markdown("<hr style='border: 0.5px solid #eee;'>", unsafe_allow_html=True)
+    
+    for _, row in df_validos.iterrows():
+        with st.container():
+            st.markdown(f'<div class="main-card">', unsafe_allow_html=True)
+            c1, c2 = st.columns([1, 2])
+            
+            with c1:
+                foto_card = row.get('Capa_Manual')
+                if pd.isna(foto_card) or foto_card == "":
+                    foto_card = get_kw_photo(row['Link_Fonte'])
+                st.image(foto_card if foto_card else "https://via.placeholder.com/400x300")
+            
+            with c2:
+                st.markdown(f"### {row['Localidade']} | {row['Tipo']}")
+                st.markdown(f"<span class='badge-5d'>VALIDAÇÃO TÉCNICA PM5D</span>", unsafe_allow_html=True)
+                
+                # Métricas em Grelha
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Investimento Total", f"{row['Investimento_Total']}")
+                m2.markdown(f"**ROI Flip**<br><span class='roi-highlight'>{row['ROI_Percent']}</span>", unsafe_allow_html=True)
+                m3.metric("Yield Anual", f"{row['Yield_Euros_Ano']}")
+                
+                st.markdown(f"<p style='font-style:italic; color:#666; font-size:13px;'>\"O papel aceita tudo, mas o terreno não engana.\"</p>", unsafe_allow_html=True)
+                
+                # Conversão
+                msg_wa = f"Olá Paulo, solicito o Deal Pack técnico para o imóvel {row['Referencia']} em {row['Localidade']}."
+                wa_url = f"https://wa.me/351911995695?text={urllib.parse.quote(msg_wa)}"
+                
+                btn_c1, btn_c2 = st.columns(2)
+                with btn_c1:
+                    st.link_button("🌐 Ver no Portal", str(row['Link_Fonte']), use_container_width=True)
+                with btn_c2:
+                    st.link_button("📄 Pedir Deal Pack", wa_url, use_container_width=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
-with col_l:
-    if os.path.exists("paulo_moreira.png"):
-        img_b64 = get_base64("paulo_moreira.png")
-        st.markdown(f'<div class="profile-frame"><img src="data:image/png;base64,{img_b64}"></div>', unsafe_allow_html=True)
-    st.link_button("📸 Instagram", "https://www.instagram.com/paulomgmoreira/")
-    st.link_button("🔵 Facebook", "https://www.facebook.com/PMMConsultoriaEGestao/")
+except Exception as e:
+    st.error("O motor de dados está a ser sincronizado. Por favor, atualize em 10 segundos.")
 
-with col_r:
-    st.markdown("""<div class="white-solid-box">
-        <div class="cargo-text">Consultor Imobiliário</div>
-        <h1 style="color:#1a1a1a; font-size:32px; font-weight:300; margin:5px 0;">Paulo Moreira</h1>
-        <div class="quote-style">"O sucesso de uma transação imobiliária depende de estratégia, não de sorte."</div>
-        <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
-    </div>""", unsafe_allow_html=True)
-
-    st.markdown("""<div class="preview-window">
-        <span style="font-size:40px;">🖼️</span>
-        <b style="font-size:18px;">Visualização Estratégica do Imóvel</b>
-        <span style="font-size:11px; font-weight:normal; color:#999; margin-top:10px;">Exemplo de Relatório de Análise 5D</span>
-    </div>""", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
-m1, m2 = st.columns(2)
-with m1:
-    st.markdown(f"""<div class="service-box">
-        <span class="service-title">📈 Estudo de Mercado</span>
-        <span class="service-desc">Análise profunda baseada em dados reais e comparativos para definir o valor certo de venda.</span><br>
-        <a href="https://www.kwportugal.pt/pt/property-valuation" class="action-link">Avaliar Imóvel</a>
-    </div>""", unsafe_allow_html=True)
-
-    st.markdown("""<div class="service-box">
-        <span class="service-title">⚖️ Apoio Jurídico</span>
-        <span class="service-desc">Segurança total na documentação, elaboração de CPCV e acompanhamento rigoroso até à escritura.</span>
-    </div>""", unsafe_allow_html=True)
-
-with m2:
-    st.markdown("""<div class="service-box">
-        <span class="service-title">📣 Plano de Marketing</span>
-        <span class="service-desc">Exposição premium em mais de 100 portais nacionais e internacionais com fotografia profissional.</span>
-    </div>""", unsafe_allow_html=True)
-
-    st.markdown(f"""<div class="service-box">
-        <span class="service-title">🏦 Gestão de Crédito</span>
-        <span class="service-desc">Intermediação de crédito certificada para encontrar as melhores condições de financiamento.</span><br>
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform" class="action-link">Simular Crédito</a>
-    </div>""", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# 5. CONTACTOS (ALINHADOS EM 3 COLUNAS)
-st.write("<br>", unsafe_allow_html=True)
-ba, bb, bc = st.columns(3)
-with ba: st.link_button("⭐ Google Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
-with bb: st.link_button("📞 Ligar Agora", "tel:+351911995695")
-with bc: st.link_button("🟢 Whatsapp", "https://wa.me/351911995695")
-
-st.write("<br>", unsafe_allow_html=True)
-f1, f2, f3 = st.columns([1, 1, 1])
-with f1: 
-    if os.path.exists("P.M.M..png"): st.image("P.M.M..png", width=100)
-with f2: 
-    if os.path.exists("REAL ESTATE.svg"): st.image("REAL ESTATE.svg", width=110)
-with f3: 
-    if os.path.exists("area_feira.png"): st.image("area_feira.png", width=110)
-
-st.markdown("""<div class="legal-footer-box">
-    <b>Resumo Plural, Lda.</b> - Licença AMI 21331 - Pessoa Coletiva 517 033 224 <br>
-    Morada comercial: Rua Estrada Nacional, nº 1190, 1200 – Zona Ind. do Roligo, 4520-115 Espargo <br>
-    Tel.: 256 313 054 | kwareafeira@kwportugal.pt | www.kwportugal.pt | <br>
-    <b>Cada Market Center é de gestão independente</b>
-</div>""", unsafe_allow_html=True)
+# --- RODAPÉ (AUTORIDADE) ---
+st.markdown("<br><div style='text-align:center; color:#888; font-size:12px;'>Paulo Moreira | Consultoria & Investimento Imobiliário 5D<br>KW Area Feira</div>", unsafe_allow_html=True)
