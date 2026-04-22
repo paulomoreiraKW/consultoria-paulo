@@ -13,8 +13,8 @@ SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 SHEET_ACTIVOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=ACTIVOS"
 SHEET_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
 
-TELEGRAM_TOKEN = "COLOCA_AQUI"
-TELEGRAM_CHAT_ID = "COLOCA_AQUI"
+TELEGRAM_TOKEN = "PauloMConsultoria_Bot"
+TELEGRAM_CHAT_ID = "8788076131:AAGwzFhxzD_H4iV2J0BmAP9k4rzEvcEoDSE"
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
