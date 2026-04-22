@@ -1,9 +1,11 @@
-from bridge import enviar_para_sheet
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
 import hashlib
+import random
+import os
+from bridge import enviar_para_sheet
 
 # ==============================
 # CONFIG
