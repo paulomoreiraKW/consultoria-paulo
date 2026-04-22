@@ -1,6 +1,7 @@
 import streamlit as st
 import base64
 import os
+import pandas as pd
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
@@ -13,7 +14,7 @@ def get_base64(bin_file):
 
 fundo_marmore = get_base64("Background.svg")
 
-# --- CSS DE PRECISÃO FINAL ---
+# --- CSS DE PRECISÃO FINAL --- (original, sem alteração de uma única cor)
 st.markdown(f"""
     <style>
     .stApp {{
@@ -112,6 +113,20 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
+# --- DADOS DO SHEET ---
+SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
+URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
+
+try:
+    df = pd.read_csv(URL)
+    df = df.fillna("")
+    df = df[pd.to_numeric(df["Score_PM5D"], errors="coerce").fillna(0) >= 3]
+except Exception:
+    df = pd.DataFrame()
+
+if "idx" not in st.session_state:
+    st.session_state.idx = 0
+
 # --- CONTEÚDO ---
 
 if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
@@ -142,66 +157,43 @@ with col_r:
         <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
     </div>""", unsafe_allow_html=True)
 
-# --- JANELA DINÂMICA ESTÁVEL (SEM BLOQUEIO) ---
+    # --- JANELA DINÂMICA — correctamente dentro do with col_r ---
+    if not df.empty:
+        row = df.iloc[st.session_state.idx % len(df)]
 
-import pandas as pd
+        imagem = row.get("Capa_Manual", "")
+        if not imagem or not str(imagem).startswith("http"):
+            imagem = "https://via.placeholder.com/400x300.png?text=PM+5D"
 
-SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
-URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
-
-try:
-    df = pd.read_csv(URL)
-    df = df.fillna("")
-    df = df[df["Score_PM5D"] >= 3]
-except:
-    df = pd.DataFrame()
-
-# índice de rotação (não bloqueia UI)
-if "idx" not in st.session_state:
-    st.session_state.idx = 0
-
-if not df.empty:
-    row = df.iloc[st.session_state.idx % len(df)]
-
-    # prioridade imagem
-    imagem = row.get("Capa_Manual", "")
-    if not imagem:
-        imagem = "https://via.placeholder.com/400x300.png?text=PM+5D"
-
-    # destaque inteligente
-    try:
-        roi = float(row.get("ROI_Percent", 0))
-        if roi > 0.25:
-            destaque = f"ROI {roi*100:.1f}%"
-        else:
+        try:
+            roi = float(str(row.get("ROI_Percent", 0)).replace("%","").replace(",",".").strip())
+            destaque = f"ROI {roi:.1f}%" if roi > 0 else "Sob Análise"
+        except Exception:
             destaque = "Sob Análise"
-    except:
-        destaque = "Sob Análise"
 
-    st.markdown(f"""
-    <div class="preview-window">
-        <img src="{imagem}" style="width:100%; border-radius:10px;">
-        <br><b>{row.get('Tipo','')} | {row.get('Localidade','')}</b><br>
-        <span style="color:#bfa573;">{destaque}</span>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="preview-window">
+            <img src="{imagem}" style="width:100%; border-radius:10px;">
+            <br><b>{row.get('Tipo','')} | {row.get('Localidade','')}</b><br>
+            <span style="color:#bfa573;">{destaque}</span>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # botão para rodar manualmente (fase 1 estável)
-    if st.button("🔄 Ver próximo ativo"):
-        st.session_state.idx += 1
-        st.rerun()
+        if st.button("🔄 Ver próximo ativo"):
+            st.session_state.idx += 1
+            st.rerun()
 
-else:
-    # fallback (NUNCA deixa vazio)
-    st.markdown("""
-    <div class="preview-window">
-        <span style="font-size:40px;">🖼️</span>
-        <b style="font-size:18px;">Visualização Estratégica do Imóvel</b>
-        <span style="font-size:11px; color:#999;">
-            A carregar dados...
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div class="preview-window">
+            <span style="font-size:40px;">🖼️</span>
+            <b style="font-size:18px;">Visualização Estratégica do Imóvel</b>
+            <span style="font-size:11px; color:#999;">A carregar dados...</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 m1, m2 = st.columns(2)
 with m1:
@@ -229,7 +221,7 @@ with m2:
     </div>""", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 5. CONTACTOS (ALINHADOS EM 3 COLUNAS)
+# 5. CONTACTOS
 st.write("<br>", unsafe_allow_html=True)
 ba, bb, bc = st.columns(3)
 with ba: st.link_button("⭐ Google Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
@@ -238,11 +230,11 @@ with bc: st.link_button("🟢 Whatsapp", "https://wa.me/351911995695")
 
 st.write("<br>", unsafe_allow_html=True)
 f1, f2, f3 = st.columns([1, 1, 1])
-with f1: 
+with f1:
     if os.path.exists("P.M.M..png"): st.image("P.M.M..png", width=100)
-with f2: 
+with f2:
     if os.path.exists("REAL ESTATE.svg"): st.image("REAL ESTATE.svg", width=110)
-with f3: 
+with f3:
     if os.path.exists("area_feira.png"): st.image("area_feira.png", width=110)
 
 st.markdown("""<div class="legal-footer-box">
