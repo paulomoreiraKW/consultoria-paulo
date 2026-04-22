@@ -202,7 +202,6 @@ else:
         </span>
     </div>
     """, unsafe_allow_html=True)
-
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 m1, m2 = st.columns(2)
 with m1:
@@ -252,4 +251,5 @@ st.markdown("""<div class="legal-footer-box">
     Tel.: 256 313 054 | kwareafeira@kwportugal.pt | www.kwportugal.pt | <br>
     <b>Cada Market Center é de gestão independente</b>
 </div>""", unsafe_allow_html=True)
+
 
