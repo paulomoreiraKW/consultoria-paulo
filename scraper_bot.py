@@ -157,7 +157,6 @@ def carregar_existente():
 # ==============================
 
 def run():
-
     print("🔍 A caçar oportunidades...")
 
     existentes = carregar_existente()
@@ -166,24 +165,23 @@ def run():
     if not existentes.empty and "Hash" in existentes.columns:
         hashes_existentes = set(existentes["Hash"].astype(str))
 
-    novos = []
-
     # SCRAPERS
     dados = []
     dados += scrape_olx()
     dados += scrape_idealista()
 
-    for item in dados:
+    novos_para_csv = []
 
+    for item in dados:
         hash_id = gerar_hash(item["Titulo"], item["Preco"], item["Local"])
 
         if hash_id in hashes_existentes:
             continue
 
         score = calcular_score(item["Preco"], 150000)  # média fictícia
-
         prioridade = "ALTA" if score >= 4 else "MEDIA" if score == 3 else "BAIXA"
 
+        # DICIONÁRIO FORMATADO PARA A GOOGLE SHEET
         novo = {
             "Referencia": hash_id[:8],
             "Titulo": item["Titulo"],
@@ -196,18 +194,19 @@ def run():
             "Hash": hash_id
         }
 
-        novos.append(novo)
+        # ENVIO PARA GOOGLE SHEETS (VIA BRIDGE)
+        enviar_para_sheet(novo)
 
+        # NOTIFICAÇÃO TELEGRAM
         enviar_telegram(f"🔥 Novo activo ({prioridade})\n{item['Titulo']}\n{item['Preco']}€\n{item['Local']}")
+        
+        novos_para_csv.append(novo)
+        hashes_existentes.add(hash_id) # Evita duplicados na mesma sessão
 
-    if novos:
-        df_novos = pd.DataFrame(novos)
-
-        print(f"✅ {len(novos)} novos activos encontrados")
-
-        # GUARDAR LOCAL (backup)
+    if novos_para_csv:
+        print(f"✅ {len(novos_para_csv)} novos activos enviados para a Sheet!")
+        df_novos = pd.DataFrame(novos_para_csv)
         df_novos.to_csv("novos_activos.csv", index=False)
-
     else:
         print("Sem novidades")
 
@@ -218,4 +217,4 @@ def run():
 if __name__ == "__main__":
     while True:
         run()
-        time.sleep(300)  # 5 minutos
+        time.sleep(300)  # Aguarda 5 minutos para a próxima ronda
