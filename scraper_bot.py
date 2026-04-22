@@ -1,3 +1,4 @@
+from bridge import enviar_para_sheet
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
