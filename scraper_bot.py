@@ -67,43 +67,53 @@ def calcular_score(preco, media_zona):
 # SCRAPER OLX (BÁSICO)
 # ==============================
 
-def scrape_olx():
-    url = "https://www.olx.pt/imoveis/apartamentos-casas-venda/"
+import time
+import random
 
+def scrape_olx():
+    url = "https://www.olx.pt/imoveis/apartamentos-casas-venda/?search%5Border%5D=created_at:desc"
     results = []
+    print("🌐 Acedendo ao OLX...")
 
     try:
-        r = requests.get(url, headers=HEADERS, timeout=5)
-        soup = BeautifulSoup(r.text, "lxml")
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        
+        if r.status_code != 200:
+            print(f"⚠️ OLX erro: {r.status_code}")
+            return []
 
+        soup = BeautifulSoup(r.text, "lxml")
         listings = soup.select("div[data-cy='l-card']")
 
-        for item in listings[:20]:
+        for item in listings[:15]:
+            time.sleep(random.uniform(1.5, 3.5))
+            
+            try:
+                title_el = item.select_one("h6")
+                price_el = item.select_one("p[data-testid='ad-price']")
+                location_el = item.select_one("p[data-testid='location-date']")
+                link_el = item.select_one("a")
 
-            titulo = item.select_one("h6")
-            preco = item.select_one("[data-testid='ad-price']")
-            local = item.select_one("[data-testid='location-date']")
+                if title_el and price_el and link_el:
+                    titulo = title_el.get_text(strip=True)
+                    preco_raw = price_el.get_text(strip=True).replace("€", "").replace(" ", "").replace(".", "").split(",")[0]
+                    
+                    results.append({
+                        "Titulo": titulo,
+                        "Preco": preco_raw,
+                        "Local": location_el.get_text(strip=True) if location_el else "N/A",
+                        "Link": "https://www.olx.pt" + link_el['href'] if link_el['href'].startswith("/") else link_el['href'],
+                        "Fonte": "OLX"
+                    })
+            except:
+                continue
 
-            titulo = titulo.text.strip() if titulo else ""
-            preco = preco.text.strip().replace("€","").replace(" ","") if preco else "0"
-            local = local.text.strip() if local else ""
-
-            link = item.find("a")
-            link = "https://www.olx.pt" + link["href"] if link else ""
-
-            if titulo:
-                results.append({
-                    "Titulo": titulo,
-                    "Preco": preco,
-                    "Local": local,
-                    "Link": link,
-                    "Fonte": "OLX"
-                })
+        print(f"📦 OLX: {len(results)} itens.")
+        return results
 
     except Exception as e:
-        print("Erro OLX:", e)
-
-    return results
+        print(f"❌ Erro OLX: {e}")
+        return []
 
 # ==============================
 # SCRAPER IDEALISTA (SIMPLES)
