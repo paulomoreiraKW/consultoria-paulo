@@ -14,7 +14,7 @@ def get_base64(bin_file):
 
 fundo_marmore = get_base64("Background.svg")
 
-# --- CSS DE PRECISÃO FINAL (CORES RETIFICADAS) ---
+# --- CSS DE PRECISÃO FINAL (CORES E SINTAXE RETIFICADAS) ---
 st.markdown(f"""
     <style>
     .stApp {{
@@ -22,7 +22,6 @@ st.markdown(f"""
         background-size: cover;
         background-attachment: fixed;
     }}
-
     .main-protection-card {{
         background-color: rgba(253,250,245,0.99);
         padding: 25px 35px 10px 35px;
@@ -31,7 +30,6 @@ st.markdown(f"""
         box-shadow: 0 15px 35px rgba(0,0,0,0.15);
         margin-bottom: 10px; 
     }}
-
     .white-solid-box {{
         background-color: #ffffff;
         padding: 20px;
@@ -40,7 +38,6 @@ st.markdown(f"""
         margin-bottom: 15px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }}
-
     .preview-window {{
         border: 2px dashed #bfa573;
         background-color: #ffffff;
@@ -56,7 +53,6 @@ st.markdown(f"""
         justify-content: center;
         box-shadow: inset 0 0 20px rgba(191,165,115,0.08);
     }}
-
     .service-box {{
         background-color: #ffffff;
         padding: 18px;
@@ -69,7 +65,6 @@ st.markdown(f"""
     .service-box:hover {{ transform: translateY(-5px); }}
     .service-title {{ color: #1a1a1a; font-weight: 800; font-size: 15px; margin-bottom: 5px; display: block; }}
     .service-desc {{ color: #555555; font-size: 12.5px; line-height: 1.4; }}
-
     .profile-frame {{
         width: 180px; height: 180px;
         border-radius: 50%; border: 4px solid #bfa573;
@@ -77,11 +72,9 @@ st.markdown(f"""
         background: #ffffff;
     }}
     .profile-frame img {{ width: 100%; height: 100%; object-fit: cover; }}
-
     .cargo-text {{ color: #1a1a1a !important; font-weight: 700 !important; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; }}
     .quote-style {{ font-style: italic; color: #bfa573; font-size: 15px; margin: 10px 0; border-left: 2px solid #bfa573; padding-left: 10px; }}
     .bio-text {{ font-size: 14px; color: #333333; line-height: 1.5; }}
-
     div.stButton > button {{
         width: 100% !important;
         height: 52px !important;
@@ -94,7 +87,6 @@ st.markdown(f"""
         margin-top: 5px;
     }}
     div.stButton > button:hover {{ background-color: #1a1a1a !important; color: #ffffff !important; }}
-
     .action-link {{
         display: inline-block;
         padding: 8px 15px;
@@ -107,7 +99,6 @@ st.markdown(f"""
         margin-top: 10px;
         text-transform: uppercase;
     }}
-
     .legal-footer-box {{
         font-size: 11px; color: #444444; text-align: center; padding: 25px;
         background: rgba(253,250,245,0.99); border-radius: 10px;
@@ -161,8 +152,7 @@ if "idx" not in st.session_state:
 if not df.empty:
     row = df.iloc[st.session_state.idx % len(df)]
     imagem = row.get("Capa_Manual", "")
-    if not imagem:
-        imagem = "https://via.placeholder.com/400x300.png?text=PM+5D"
+    if not imagem: imagem = "https://via.placeholder.com/400x300.png?text=PM+5D"
 
     try:
         roi = float(row.get("ROI_Percent", 0))
@@ -182,33 +172,18 @@ if not df.empty:
         st.session_state.idx += 1
         st.rerun()
 else:
-    st.markdown("""<div class="preview-window">🖼️<br>Visualização Estratégica do Imóvel</div>""", unsafe_allow_html=True)
+    st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 m1, m2 = st.columns(2)
 with m1:
-    st.markdown(f"""<div class="service-box">
-        <span class="service-title">📈 Estudo de Mercado</span>
-        <span class="service-desc">Análise profunda baseada em dados reais e comparativos para definir o valor certo de venda.</span><br>
-        <a href="https://www.kwportugal.pt/pt/property-valuation" class="action-link">Avaliar Imóvel</a>
-    </div>""", unsafe_allow_html=True)
-    st.markdown("""<div class="service-box">
-        <span class="service-title">⚖️ Apoio Jurídico</span>
-        <span class="service-desc">Segurança total na documentação, elaboração de CPCV e acompanhamento rigoroso até à escritura.</span>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="service-box"><span class="service-title">📈 Estudo de Mercado</span><span class="service-desc">Análise profunda baseada em dados reais e comparativos.</span><br><a href="https://www.kwportugal.pt/pt/property-valuation" class="action-link">Avaliar Imóvel</a></div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="service-box"><span class="service-title">⚖️ Apoio Jurídico</span><span class="service-desc">Segurança total na documentação e acompanhamento rigoroso.</span></div>""", unsafe_allow_html=True)
 with m2:
-    st.markdown("""<div class="service-box">
-        <span class="service-title">📣 Plano de Marketing</span>
-        <span class="service-desc">Exposição premium em mais de 100 portais nacionais e internacionais com fotografia profissional.</span>
-    </div>""", unsafe_allow_html=True)
-    st.markdown(f"""<div class="service-box">
-        <span class="service-title">🏦 Gestão de Crédito</span>
-        <span class="service-desc">Intermediação de crédito certificada para encontrar as melhores condições de financiamento.</span><br>
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform" class="action-link">Simular Crédito</a>
-    </div>""", unsafe_allow_html=True)
+    st.markdown("""<div class="service-box"><span class="service-title">📣 Plano de Marketing</span><span class="service-desc">Exposição premium em mais de 100 portais nacionais e internacionais.</span></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div class="service-box"><span class="service-title">🏦 Gestão de Crédito</span><span class="service-desc">Intermediação certificada para as melhores condições.</span><br><a href="https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform" class="action-link">Simular Crédito</a></div>""", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 5. CONTACTOS
 st.write("<br>", unsafe_allow_html=True)
 ba, bb, bc = st.columns(3)
 with ba: st.link_button("⭐ Google Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
