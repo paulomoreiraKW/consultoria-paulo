@@ -40,17 +40,22 @@ st.markdown(f"""
         box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }}
 
-    .preview-window {{
-        border: 2px dashed #bfa573;
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        text-align: center;
-        color: #bfa573;
-        font-weight: 600;
-        min-height: 250px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: inset 0 0 20px rgba(191, 165, 115, 0.08);
+.preview-window {
+    border: 2px dashed #bfa573;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    color: #bfa573;
+    font-weight: 600;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 20px rgba(191, 165, 115, 0.08);
+}
+}
     }}
 
     .service-box {{
