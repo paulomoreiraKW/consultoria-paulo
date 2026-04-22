@@ -1,6 +1,10 @@
+[server]
+enableCORS = false
+ 
 [theme]
 base = "light"
 backgroundColor = "#fdfaf5"
 secondaryBackgroundColor = "#ffffff"
 textColor = "#1a1a1a"
 primaryColor = "#bfa573"
+font = "sans serif"
