@@ -67,7 +67,7 @@ def scrape_olx():
     results = []
 
     try:
-        r = requests.get(url, headers=HEADERS, timeout=10)
+        r = requests.get(url, headers=HEADERS, timeout=5)
         soup = BeautifulSoup(r.text, "lxml")
 
         listings = soup.select("div[data-cy='l-card']")
@@ -109,7 +109,7 @@ def scrape_idealista():
     results = []
 
     try:
-        r = requests.get(url, headers=HEADERS, timeout=10)
+        r = requests.get(url, headers=HEADERS, timeout=5)
         soup = BeautifulSoup(r.text, "lxml")
 
         items = soup.select(".item")
