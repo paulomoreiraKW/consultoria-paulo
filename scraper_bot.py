@@ -159,16 +159,38 @@ def carregar_existente():
 def run():
     print("🔍 A caçar oportunidades...")
 
+    # TESTE RÁPIDO: Ver se o bridge funciona antes de tudo
+    print("📡 Enviando sinal de teste para a Sheet...")
+    teste = {
+        "Referencia": "TEST123",
+        "Titulo": "TESTE DE LIGAÇÃO",
+        "Localidade": "Porto",
+        "Preco": "100.000",
+        "Link_Fonte": "https://teste.com",
+        "Fonte": "TEST",
+        "Score_PM5D": 5,
+        "Prioridade": "ALTA",
+        "Hash": "abc123test"
+    }
+    enviar_para_sheet(teste)
+
     existentes = carregar_existente()
     hashes_existentes = set()
 
     if not existentes.empty and "Hash" in existentes.columns:
         hashes_existentes = set(existentes["Hash"].astype(str))
 
-    # SCRAPERS
-    dados = []
-    dados += scrape_olx()
-    dados += scrape_idealista()
+    # SCRAPERS - Captura individual para diagnóstico
+    print("🌐 Acedendo ao OLX...")
+    dados_olx = scrape_olx()
+    print(f"📦 OLX encontrou: {len(dados_olx)} itens")
+
+    print("🌐 Acedendo ao Idealista...")
+    dados_idealista = scrape_idealista()
+    print(f"📦 Idealista encontrou: {len(dados_idealista)} itens")
+
+    dados = dados_olx + dados_idealista
+    print(f"🚀 Total bruto a processar: {len(dados)}")
 
     novos_para_csv = []
 
@@ -177,11 +199,12 @@ def run():
 
         if hash_id in hashes_existentes:
             continue
+        
+        print(f"✨ Novo item detetado: {item['Titulo'][:30]}...")
 
-        score = calcular_score(item["Preco"], 150000)  # média fictícia
+        score = calcular_score(item["Preco"], 150000)  
         prioridade = "ALTA" if score >= 4 else "MEDIA" if score == 3 else "BAIXA"
 
-        # DICIONÁRIO FORMATADO PARA A GOOGLE SHEET
         novo = {
             "Referencia": hash_id[:8],
             "Titulo": item["Titulo"],
@@ -194,21 +217,21 @@ def run():
             "Hash": hash_id
         }
 
-        # ENVIO PARA GOOGLE SHEETS (VIA BRIDGE)
+        # ENVIO PARA GOOGLE SHEETS
         enviar_para_sheet(novo)
 
         # NOTIFICAÇÃO TELEGRAM
         enviar_telegram(f"🔥 Novo activo ({prioridade})\n{item['Titulo']}\n{item['Preco']}€\n{item['Local']}")
         
         novos_para_csv.append(novo)
-        hashes_existentes.add(hash_id) # Evita duplicados na mesma sessão
+        hashes_existentes.add(hash_id)
 
     if novos_para_csv:
-        print(f"✅ {len(novos_para_csv)} novos activos enviados para a Sheet!")
+        print(f"✅ {len(novos_para_csv)} novos activos processados!")
         df_novos = pd.DataFrame(novos_para_csv)
         df_novos.to_csv("novos_activos.csv", index=False)
     else:
-        print("Sem novidades")
+        print("⏸️ Sem novidades (tudo o que foi encontrado já existe ou lista vazia)")
 
 # ==============================
 # LOOP CONTÍNUO
