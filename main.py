@@ -155,7 +155,7 @@ with col_r:
         <div class="cargo-text">Consultor Imobiliário</div>
         <h1 style="color:#1a1a1a; font-size:32px; font-weight:300; margin:5px 0;">Paulo Moreira</h1>
         <div class="quote-style">"O sucesso de uma transação imobiliária depende de estratégia, não de sorte."</div>
-        <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excellence.</div>
+        <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
     </div>""", unsafe_allow_html=True)
 
     # --- JANELA DINÂMICA — CARROSSEL AUTOMÁTICO CONTROLADO ---
@@ -173,12 +173,10 @@ with col_r:
 
         row = df.iloc[st.session_state.idx]
 
-        # --- PRIORIDADE DE IMAGEM ---
         imagem = row.get("Capa_Manual", "")
         if not imagem or not str(imagem).startswith("http"):
             imagem = "https://via.placeholder.com/400x300.png?text=PM+5D"
 
-        # --- DESTAQUE INTELIGENTE ---
         try:
             roi = float(str(row.get("ROI_Percent", 0)).replace("%","").replace(",",".").strip())
         except:
@@ -203,18 +201,12 @@ with col_r:
             <span style="color:#bfa573;">{destaque}</span>
         </div>
         """, unsafe_allow_html=True)
-
     else:
-        st.markdown("""
-        <div class="preview-window">
-            <span style="font-size:40px;">🖼️</span>
-            <b style="font-size:18px;">Visualização Estratégica do Imóvel</b>
-            <span style="font-size:11px; color:#999;">A carregar dados...</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div class="preview-window">Sincronizando Ativos...</div>""", unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
+# --- SECÇÃO DE SERVIÇOS (RESTAURADA) ---
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 m1, m2 = st.columns(2)
 with m1:
@@ -242,7 +234,25 @@ with m2:
     </div>""", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 5. CONTACTOS
+# --- CONTACTOS E LOGOS (RESTAURADOS) ---
 st.write("<br>", unsafe_allow_html=True)
 ba, bb, bc = st.columns(3)
 with ba: st.link_button("⭐ Google Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
+with bb: st.link_button("📞 Ligar Agora", "tel:+351911995695")
+with bc: st.link_button("🟢 Whatsapp", "https://wa.me/351911995695")
+
+st.write("<br>", unsafe_allow_html=True)
+f1, f2, f3 = st.columns([1, 1, 1])
+with f1:
+    if os.path.exists("P.M.M..png"): st.image("P.M.M..png", width=100)
+with f2:
+    if os.path.exists("REAL ESTATE.svg"): st.image("REAL ESTATE.svg", width=110)
+with f3:
+    if os.path.exists("area_feira.png"): st.image("area_feira.png", width=110)
+
+st.markdown("""<div class="legal-footer-box">
+    <b>Resumo Plural, Lda.</b> - Licença AMI 21331 - Pessoa Coletiva 517 033 224 <br>
+    Morada comercial: Rua Estrada Nacional, nº 1190, 1200 – Zona Ind. do Roligo, 4520-115 Espargo <br>
+    Tel.: 256 313 054 | kwareafeira@kwportugal.pt | www.kwportugal.pt | <br>
+    <b>Cada Market Center é de gestão independente</b>
+</div>""", unsafe_allow_html=True)
