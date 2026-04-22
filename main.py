@@ -83,8 +83,50 @@ with c3: st.link_button("📲 App Pessoal KW", "https://app.kw.com/KWNVLOD5AW4")
 st.write("<br>", unsafe_allow_html=True)
 
 # --- MAIN CARD ---
-st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
-col_l, col_r = st.columns([1, 1.8])
+col_container = st.container()
+
+with col_container:
+    st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
+
+    col_l, col_r = st.columns([1, 1.8])
+
+    with col_l:
+        if os.path.exists("paulo_moreira.png"):
+            img_b64 = get_base64("paulo_moreira.png")
+            st.markdown(f'<div class="profile-frame"><img src="data:image/png;base64,{img_b64}"></div>', unsafe_allow_html=True)
+
+    with col_r:
+
+        # 👇 AQUI ENTRA O CARROSSEL (sem alterar mais nada)
+        if not df.empty:
+            row = df.iloc[0]
+
+            imagem = row.get("Capa_Manual", "") or "https://via.placeholder.com/400x300.png?text=PM+5D"
+
+            try:
+                roi = float(row.get("ROI_Percent", 0))
+                destaque = f"ROI {roi*100:.1f}%" if roi > 0 else "Sob Análise"
+            except:
+                destaque = "Sob Análise"
+
+            st.markdown(f"""
+            <div class="preview-window">
+                <img src="{imagem}" style="width:100%; border-radius:10px; margin-bottom:10px;">
+                <b>{row.get('Tipo','')} | {row.get('Localidade','')}</b>
+                <span>{destaque}</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+        else:
+            st.markdown("""
+            <div class="preview-window">
+                <span style="font-size:40px;">🖼️</span>
+                <b>Visualização Estratégica do Imóvel</b>
+                <span style="font-size:11px;">Sem dados disponíveis</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col_l:
     if os.path.exists("paulo_moreira.png"):
