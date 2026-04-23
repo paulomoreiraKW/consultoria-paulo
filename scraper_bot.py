@@ -73,15 +73,17 @@ import time
 import random
 
 def scrape_olx():
-    url = "https://www.olx.pt/imoveis/apartamentos-casas-venda/?search%5Border%5D=created_at:desc"
+    url = "https://www.olx.pt/imoveis/apartamentos-casas-venda/"
     results = []
-    print("🌐 Acedendo ao OLX...")
-
+    
     try:
         r = requests.get(url, headers=HEADERS, timeout=10)
         
+        print(f"DEBUG OLX - Status: {r.status_code}")
+        print(f"DEBUG OLX - Tamanho HTML: {len(r.text)}")
+
         if r.status_code != 200:
-            print(f"⚠️ OLX erro: {r.status_code}")
+            print("⚠️ OLX bloqueou ou URL inválido")
             return []
 
         soup = BeautifulSoup(r.text, "lxml")
@@ -110,11 +112,11 @@ def scrape_olx():
             except:
                 continue
 
-        print(f"📦 OLX: {len(results)} itens.")
+        print(f"📦 OLX entregou {len(results)} itens.")
         return results
 
     except Exception as e:
-        print(f"❌ Erro OLX: {e}")
+        print(f"❌ Erro crítico no OLX: {e}")
         return []
 
 # ==============================
