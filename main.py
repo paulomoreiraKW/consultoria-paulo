@@ -1,7 +1,3 @@
-Pasta: `/`
-Ficheiro: `main.py`
-
-```python
 import streamlit as st
 import base64
 import os
