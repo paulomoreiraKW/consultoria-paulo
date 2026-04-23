@@ -1,10 +1,13 @@
+Pasta: `/`
+Ficheiro: `main.py`
+
+```python
 import streamlit as st
 import base64
 import os
 import pandas as pd
 import time
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
 def get_base64(bin_file):
@@ -15,7 +18,6 @@ def get_base64(bin_file):
 
 fundo_marmore = get_base64("Background.svg")
 
-# --- CSS DE PRECISÃO FINAL --- (original, sem alteração de uma única cor)
 st.markdown(f"""
     <style>
     .stApp {{
@@ -114,21 +116,27 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- DADOS DO SHEET ---
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
 try:
     df = pd.read_csv(URL)
     df = df.fillna("")
+
     df = df[pd.to_numeric(df["Score_PM5D"], errors="coerce").fillna(0) >= 3]
+
+    if "Status_Scraping" in df.columns:
+        df = df[df["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
+
+    if "Decisão" in df.columns:
+        df = df[df["Decisão"].str.upper().isin(["APROVADO", "SIM", "OK"])]
+
+    df = df.reset_index(drop=True)
 except Exception:
     df = pd.DataFrame()
 
 if "idx" not in st.session_state:
     st.session_state.idx = 0
-
-# --- CONTEÚDO ---
 
 if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
     st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
@@ -158,11 +166,10 @@ with col_r:
         <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
     </div>""", unsafe_allow_html=True)
 
-    # --- JANELA DINÂMICA — CARROSSEL AUTOMÁTICO CONTROLADO ---
     if "last_update" not in st.session_state:
         st.session_state.last_update = time.time()
 
-    intervalo = 3  # segundos entre imóveis
+    intervalo = 3 
 
     if not df.empty:
         agora = time.time()
@@ -177,28 +184,36 @@ with col_r:
         if not imagem or not str(imagem).startswith("http"):
             imagem = "https://via.placeholder.com/400x300.png?text=PM+5D"
 
-        try:
-            roi = float(str(row.get("ROI_Percent", 0)).replace("%","").replace(",",".").strip())
-        except:
-            roi = 0
+        def safe_float(value):
+            try:
+                return float(str(value).replace("%","").replace(",",".").replace("€","").replace(" ","").strip())
+            except:
+                return 0
 
-        try:
-            yield_val = float(str(row.get("Yield_Euros_Ano", 0)).replace(",","").strip())
-        except:
-            yield_val = 0
+        roi = safe_float(row.get("ROI_Percent", 0))
+        lucro = safe_float(row.get("Lucro_Flip", 0))
+        invest = safe_float(row.get("Investimento_Total", 0))
+        capex = safe_float(row.get("CAPEX_Estimado", 0))
+        renda = safe_float(row.get("Renda_Mensal", 0))
+        yield_val = safe_float(row.get("Yield_Euros_Ano", 0))
 
-        if roi > 20:
-            destaque = f"ROI {roi:.1f}%"
+        if roi > 25:
+            destaque = f"ROI ALTO {roi:.1f}%"
+        elif lucro > 50000:
+            destaque = f"FLIP +{lucro:,.0f}€"
+        elif renda > 0:
+            destaque = f"YIELD {renda:,.0f}€/mês"
         elif yield_val > 0:
-            destaque = f"Yield {yield_val:,.0f}€"
+            destaque = f"YIELD {yield_val:,.0f}€/ano"
         else:
-            destaque = "Sob Análise"
+            destaque = "Oportunidade em análise"
 
         st.markdown(f"""
         <div class="preview-window">
             <img src="{imagem}" style="width:100%; border-radius:10px;">
             <br><b>{row.get('Tipo','')} | {row.get('Localidade','')}</b><br>
             <span style="color:#bfa573;">{destaque}</span>
+            <br><small style="color:#888;">Inv: {invest:,.0f}€ | CAPEX: {capex:,.0f}€</small>
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -206,7 +221,6 @@ with col_r:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- SECÇÃO DE SERVIÇOS (RESTAURADA) ---
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 m1, m2 = st.columns(2)
 with m1:
@@ -234,7 +248,6 @@ with m2:
     </div>""", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- CONTACTOS E LOGOS (RESTAURADOS) ---
 st.write("<br>", unsafe_allow_html=True)
 ba, bb, bc = st.columns(3)
 with ba: st.link_button("⭐ Google Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
@@ -256,3 +269,4 @@ st.markdown("""<div class="legal-footer-box">
     Tel.: 256 313 054 | kwareafeira@kwportugal.pt | www.kwportugal.pt | <br>
     <b>Cada Market Center é de gestão independente</b>
 </div>""", unsafe_allow_html=True)
+```
