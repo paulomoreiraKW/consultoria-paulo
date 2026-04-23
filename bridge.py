@@ -6,7 +6,10 @@ WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUUR
 def enviar_para_sheet(item):
     try:
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(WEBHOOK_URL, data=json.dumps(item), headers=headers, timeout=10)
+        response = requests.post(WEBHOOK_URL, data=json.dumps(item), headers=headers, timeout=15)
+        if response.status_code != 200:
+            print(f"⚠️ Erro Webhook: {response.status_code} - {response.text}")
         return response.status_code == 200
-    except:
+    except Exception as e:
+        print(f"❌ Falha na Bridge: {e}")
         return False
