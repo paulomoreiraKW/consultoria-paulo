@@ -1,8 +1,8 @@
 import requests
-import xml.etree.ElementTree as ET
 import hashlib
 import pandas as pd
 import os
+from bs4 import BeautifulSoup
 from bridge import enviar_para_sheet
 
 SHEET_ID = os.getenv("SHEET_ID", "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag")
@@ -64,35 +64,32 @@ def processar_imovirtual_rss():
     url = "https://www.imovirtual.com/comprar/moradia/aveiro/?search%5Bfilter_float_price%3Ato%5D=600000&format=xml"
     
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0",
         "Accept": "application/xml"
     }
 
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        
+
         if r.status_code != 200:
             print(f"❌ Erro HTTP: {r.status_code}")
             return []
 
-        # Mostra os primeiros 300 caracteres para diagnóstico
-        print("📄 Preview resposta:", r.text[:300])
-
-        # Limpeza de caracteres problemáticos
         content = r.content.decode("utf-8", errors="ignore")
-        content = content.replace("&nbsp;", " ")
-        # Só converte & se não fizer parte de uma entidade já existente
-        if "&amp;" not in content:
-            content = content.replace("&", "&amp;")
 
-        root = ET.fromstring(content)
+        if "<html" in content.lower():
+            print("🚫 BLOQUEADO PELO IMOVIRTUAL (HTML recebido)")
+            print(content[:300])
+            return []
+
+        soup = BeautifulSoup(content, "xml")
         items = []
 
-        for entry in root.findall(".//item"):
-            titulo = entry.findtext("title", "")
-            link = entry.findtext("link", "")
-            preco_raw = entry.findtext("price", "0")
-            local = entry.findtext("location", "Aveiro")
+        for entry in soup.find_all("item"):
+            titulo = entry.title.text if entry.title else ""
+            link = entry.link.text if entry.link else ""
+            preco_raw = entry.find("price").text if entry.find("price") else "0"
+            local = entry.find("location").text if entry.find("location") else "Aveiro"
 
             if any(z in local.lower() for z in ZONAS_ALVO):
                 items.append({
