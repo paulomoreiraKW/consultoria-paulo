@@ -56,8 +56,8 @@ def carregar_hashes_existentes():
         df = pd.read_csv(SHEET_LEADS)
         if "Hash" in df.columns:
             return set(df["Hash"].astype(str))
-    except:
-        pass
+    except Exception as e:
+        print(f"⚠️ Erro ao ler hashes (Sheet pode estar vazia): {e}")
     return set()
 
 def processar_imovirtual_rss():
@@ -65,7 +65,9 @@ def processar_imovirtual_rss():
     headers = {"User-Agent": "Mozilla/5.0"}
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        if r.status_code != 200: return []
+        if r.status_code != 200: 
+            print(f"❌ Erro HTTP: {r.status_code}")
+            return []
         root = ET.fromstring(r.content)
         items = []
         for entry in root.findall(".//item"):
@@ -78,19 +80,37 @@ def processar_imovirtual_rss():
                     "Titulo": titulo, "Preco": preco_raw, "Local": local, "Link": link, "Fonte": "Imovirtual_RSS"
                 })
         return items
-    except:
+    except Exception as e:
+        print(f"❌ Erro no Parser RSS: {e}")
         return []
 
 def run():
+    print("🚀 SCRAPER START")
     novos_items = processar_imovirtual_rss()
+    print(f"📡 RSS items encontrados: {len(novos_items)}")
+    
     hashes_existentes = carregar_hashes_existentes()
+    print(f"🧠 Hashes carregados: {len(hashes_existentes)}")
+    
     for item in novos_items:
-        if not titulo_valido(item["Titulo"]): continue
+        print(f"➡️ A analisar: {item['Titulo'][:50]}")
+        
+        if not titulo_valido(item["Titulo"]): 
+            print("   ⏩ Titulo inválido (Lixo)")
+            continue
+            
         preco = limpar_preco(item["Preco"])
         h = hashlib.md5(f"{item['Link']}".encode()).hexdigest()
-        if h in hashes_existentes: continue
+        
+        if h in hashes_existentes: 
+            print("   ⏩ Já existe (Hash skip)")
+            continue
+            
         score = calcular_score_pm5d(item["Titulo"], preco)
-        if score < 1: continue
+        if score < 1: 
+            print(f"   ⏩ Score baixo: {score}")
+            continue
+            
         lead = {
             "Referencia": h[:8],
             "Titulo": item["Titulo"],
@@ -105,7 +125,11 @@ def run():
             "Decisao": "",
             "Notas": ""
         }
-        if enviar_para_sheet(lead):
+        
+        ok = enviar_para_sheet(lead)
+        print("📤 Envio para sheet:", ok)
+        
+        if ok:
             if lead["Prioridade"] == "ALTA":
                 enviar_telegram(f"💎 NOVA LEAD {lead['Prioridade']}\n{lead['Titulo']}\n{preco}€\n{lead['Link']}")
             hashes_existentes.add(h)
