@@ -57,29 +57,54 @@ def carregar_hashes_existentes():
         if "Hash" in df.columns:
             return set(df["Hash"].astype(str))
     except Exception as e:
-        print(f"⚠️ Erro ao ler hashes (Sheet pode estar vazia): {e}")
+        print(f"⚠️ Erro ao ler hashes: {e}")
     return set()
 
 def processar_imovirtual_rss():
     url = "https://www.imovirtual.com/comprar/moradia/aveiro/?search%5Bfilter_float_price%3Ato%5D=600000&format=xml"
-    headers = {"User-Agent": "Mozilla/5.0"}
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Accept": "application/xml"
+    }
+
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        if r.status_code != 200: 
+        
+        if r.status_code != 200:
             print(f"❌ Erro HTTP: {r.status_code}")
             return []
-        root = ET.fromstring(r.content)
+
+        # Mostra os primeiros 300 caracteres para diagnóstico
+        print("📄 Preview resposta:", r.text[:300])
+
+        # Limpeza de caracteres problemáticos
+        content = r.content.decode("utf-8", errors="ignore")
+        content = content.replace("&nbsp;", " ")
+        # Só converte & se não fizer parte de uma entidade já existente
+        if "&amp;" not in content:
+            content = content.replace("&", "&amp;")
+
+        root = ET.fromstring(content)
         items = []
+
         for entry in root.findall(".//item"):
             titulo = entry.findtext("title", "")
             link = entry.findtext("link", "")
-            preco_raw = entry.findtext("price", "0") 
+            preco_raw = entry.findtext("price", "0")
             local = entry.findtext("location", "Aveiro")
+
             if any(z in local.lower() for z in ZONAS_ALVO):
                 items.append({
-                    "Titulo": titulo, "Preco": preco_raw, "Local": local, "Link": link, "Fonte": "Imovirtual_RSS"
+                    "Titulo": titulo,
+                    "Preco": preco_raw,
+                    "Local": local,
+                    "Link": link,
+                    "Fonte": "Imovirtual_RSS"
                 })
+
         return items
+
     except Exception as e:
         print(f"❌ Erro no Parser RSS: {e}")
         return []
