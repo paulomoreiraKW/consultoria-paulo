@@ -1,4 +1,5 @@
 import requests
+print("📄 HTML preview:", r.text[:500])
 import hashlib
 import pandas as pd
 import os
@@ -56,8 +57,15 @@ def scraper_custojusto():
     items = []
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        soup = BeautifulSoup(r.text, "html.parser")
-        for ad in soup.select("a[href*='/imovel/'], a[href*='/moradia/']"):
+
+print("📄 HTML preview:", r.text[:500])  # 👈 AQUI
+
+soup = BeautifulSoup(r.text, "html.parser")
+
+links = soup.find_all("a")
+print("🔗 Total links encontrados:", len(links))  # 👈 E AQUI
+
+for ad in soup.select("a[href*='/imovel/'], a[href*='/moradia/']"):
             try:
                 titulo = ad.get_text(strip=True)
                 link = ad["href"]
@@ -75,9 +83,18 @@ def scraper_sapo():
     items = []
     try:
         r = requests.get(url, headers=headers, timeout=15)
-        soup = BeautifulSoup(r.text, "html.parser")
-        ads = soup.select("div.searchResultProperty") or soup.select("article")
-        for ad in ads:
+
+print("📄 SAPO HTML preview:", r.text[:500])  # 👈 DEBUG 1
+
+soup = BeautifulSoup(r.text, "html.parser")
+
+links = soup.find_all("a")
+print("🔗 SAPO total links:", len(links))  # 👈 DEBUG 2
+
+ads = soup.select("div.searchResultProperty") or soup.select("article")
+print("📦 SAPO ads encontrados:", len(ads))  # 👈 DEBUG 3
+
+for ad in ads:
             texto = ad.get_text(" ", strip=True)
             if any(z in texto.lower() for z in ZONAS_ALVO):
                 try:
@@ -102,10 +119,9 @@ def run():
         preco = limpar_preco(item["PrecoRaw"])
         score = calcular_score_pm5d(item["Titulo"], preco)
         
-        print(f"🚨 DEBUG ENVIO → {item['Fonte']} | {item['Titulo'][:30]} | {preco}€ | Score {score}")
+        print(f"🚨 DEBUG → {item['Fonte']} | {item['Titulo'][:30]} | {preco}€ | Score {score}")
 
-        # Filtro de score temporariamente desativado para teste de envio
-        # if score < 2: continue
+        if score < 2: continue
         
         h_str = f"{item['Titulo']}{preco}".strip().lower()
         h = hashlib.md5(h_str.encode()).hexdigest()
