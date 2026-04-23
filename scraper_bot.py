@@ -1,138 +1,110 @@
 import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import time
+import xml.etree.ElementTree as ET
 import hashlib
-import random
-import os
+import pandas as pd
 from bridge import enviar_para_sheet
 
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
-SHEET_ACTIVOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=ACTIVOS"
+SHEET_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
+
 TELEGRAM_TOKEN = "8788076131:AAGwzFhxzD_H4iV2J0BmAP9k4rzEvcEoDSE"
 TELEGRAM_CHAT_ID = "477875361"
-ZONAS_ALVO = ["madeira", "azeméis", "feira", "ovar", "cambra", "arouca", "aveiro"]
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept-Language": "pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-    "Connection": "keep-alive"
-}
+ZONAS_ALVO = ["madeira", "azeméis", "feira", "ovar", "cambra", "arouca", "aveiro"]
 
 def enviar_telegram(msg):
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": msg}, timeout=10)
-    except: pass
+    except:
+        pass
 
-def gerar_hash(titulo, preco, local):
-    base = f"{titulo}_{preco}_{local}"
-    return hashlib.md5(base.encode()).hexdigest()
-
-def calcular_score(titulo, preco):
+def limpar_preco(preco_raw):
     try:
-        preco = float(preco)
+        p = str(preco_raw)
+        p = p.replace("€", "").replace(" ", "").replace(".", "").replace(",", "")
+        return float(p)
+    except:
+        return 0
+
+def titulo_valido(titulo):
+    t = titulo.lower()
+    lixo = ["reservado", "arrendado", "promoção", "vendido"]
+    return not any(w in t for w in lixo)
+
+def calcular_score_pm5d(titulo, preco):
+    try:
+        p = float(preco)
         t = titulo.lower()
-        
-        if any(w in t for w in ["armazém", "pavilhão", "industrial", "nave"]):
-            media_ref = 450000 
-        elif any(w in t for w in ["terreno", "lote"]):
-            media_ref = 80000
-        elif any(w in t for w in ["quinta", "rural", "rústico"]):
-            media_ref = 425000
-        elif any(w in t for w in ["apartamento", "t1", "t2", "t3", "t4"]):
-            media_ref = 225000
-        else:
-            media_ref = 456890
+        if any(w in t for w in ["armazém", "industrial"]): ref = 450000
+        elif any(w in t for w in ["terreno", "lote"]): ref = 80000
+        elif any(w in t for w in ["apartamento", "t1", "t2"]): ref = 225000
+        else: ref = 456890 
+        ratio = p / ref
+        if ratio < 0.75: return 5
+        if ratio < 0.90: return 4
+        if ratio <= 1.10: return 3
+        return 2
+    except:
+        return 1
 
-        if preco < media_ref * 0.75: return 5
-        elif preco < media_ref * 0.9: return 4
-        elif preco <= media_ref * 1.1: return 3
-        else: return 2
-    except: return 1
-
-def scrape_olx():
-    url = "https://www.olx.pt/imoveis/"
-    results = []
-    print(f"🌐 Acedendo a: {url}")
+def carregar_hashes_existentes():
     try:
-        r = requests.get(url, headers=HEADERS, timeout=15)
-        if r.status_code != 200:
-            print(f"❌ Status {r.status_code}")
-            return []
-        
-        soup = BeautifulSoup(r.text, "lxml")
-        listings = soup.find_all("div", {"data-cy": "l-card"})
-        print(f"🔎 Cards brutos: {len(listings)}")
+        df = pd.read_csv(SHEET_LEADS)
+        if "Hash" in df.columns:
+            return set(df["Hash"].astype(str))
+    except:
+        pass
+    return set()
 
-        for item in listings[:25]:
-            try:
-                title_el = item.select_one("h6")
-                price_el = item.select_one("p[data-testid='ad-price']")
-                location_el = item.select_one("p[data-testid='location-date']")
-                link_el = item.select_one("a")
-
-                if title_el and price_el:
-                    titulo = title_el.get_text(strip=True)
-                    local = location_el.get_text(strip=True) if location_el else "N/A"
-                    p_raw = price_el.get_text(strip=True).replace("€", "").replace(" ", "").replace(".", "").split(",")[0]
-                    preco_int = int(p_raw) if p_raw.isdigit() else 0
-                    
-                    if not any(zona in local.lower() for zona in ZONAS_ALVO): continue
-                    if preco_int < 15000 or preco_int > 4000000: continue
-
-                    print(f"✅ Detetado: {titulo[:30]} | {preco_int}€")
-
-                    results.append({
-                        "Titulo": titulo,
-                        "Preco": str(preco_int),
-                        "Local": local,
-                        "Link": "https://www.olx.pt" + link_el['href'] if link_el['href'].startswith("/") else link_el['href'],
-                        "Fonte": "OLX"
-                    })
-            except: continue
-        return results
-    except Exception as e:
-        print(f"❌ Erro: {e}")
+def processar_imovirtual_rss():
+    url = "https://www.imovirtual.com/comprar/moradia/aveiro/?search%5Bfilter_float_price%3Ato%5D=600000&format=xml"
+    try:
+        r = requests.get(url, timeout=15)
+        if r.status_code != 200: return []
+        root = ET.fromstring(r.content)
+        items = []
+        for entry in root.findall(".//item"):
+            titulo = entry.findtext("title", "")
+            link = entry.findtext("link", "")
+            preco_raw = entry.findtext("price", "0") 
+            local = entry.findtext("location", "Aveiro")
+            if any(z in local.lower() for z in ZONAS_ALVO):
+                items.append({
+                    "Titulo": titulo, "Preco": preco_raw, "Local": local, "Link": link, "Fonte": "Imovirtual_RSS"
+                })
+        return items
+    except:
         return []
 
-def carregar_existente():
-    try:
-        df = pd.read_csv(SHEET_ACTIVOS)
-        return df
-    except: return pd.DataFrame()
-
 def run():
-    print("🚀 Run iniciado")
-    existentes = carregar_existente()
-    hashes_existentes = set(existentes["Hash"].astype(str)) if not existentes.empty and "Hash" in existentes.columns else set()
-    
-    dados = scrape_olx()
-    for item in dados:
-        hash_id = gerar_hash(item["Titulo"], item["Preco"], item["Local"])
-        if hash_id in hashes_existentes: continue
-
-        score = calcular_score(item["Titulo"], item["Preco"])
-        prioridade = "ALTA" if score >= 4 else "MEDIA" if score == 3 else "BAIXA"
-
-        novo = {
-            "Referencia": hash_id[:8],
+    novos_items = processar_imovirtual_rss()
+    hashes_existentes = carregar_hashes_existentes()
+    for item in novos_items:
+        if not titulo_valido(item["Titulo"]): continue
+        preco = limpar_preco(item["Preco"])
+        h = hashlib.md5(f"{item['Link']}".encode()).hexdigest()
+        if h in hashes_existentes: continue
+        score = calcular_score_pm5d(item["Titulo"], preco)
+        if score < 3: continue
+        lead = {
+            "Referencia": h[:8],
             "Titulo": item["Titulo"],
             "Localidade": item["Local"],
-            "Preco": item["Preco"],
+            "Preco": preco,
             "Link_Fonte": item["Link"],
             "Fonte": item["Fonte"],
             "Score_PM5D": score,
-            "Prioridade": prioridade,
-            "Hash": hash_id
+            "Prioridade": "ALTA" if score >= 4 else "MEDIA",
+            "Hash": h,
+            "Estado": "NOVO",
+            "Decisao": "",
+            "Notas": ""
         }
-
-        if enviar_para_sheet(novo):
-            if prioridade == "ALTA":
-                enviar_telegram(f"🔥 OPORTUNIDADE {prioridade}\n{item['Titulo']}\n{item['Preco']}€\n{item['Local']}")
-            hashes_existentes.add(hash_id)
-            print(f"💾 Guardado: {item['Titulo'][:20]}")
+        if enviar_para_sheet(lead):
+            if lead["Prioridade"] == "ALTA":
+                enviar_telegram(f"💎 NOVA LEAD {lead['Prioridade']}\n{lead['Titulo']}\n{preco}€\n{lead['Link']}")
+            hashes_existentes.add(h)
 
 if __name__ == "__main__":
     run()
