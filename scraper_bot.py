@@ -208,10 +208,12 @@ def run():
                 f"🏠 {item['Fonte']}\n{item['Titulo'][:80]}\n💰 {preco}€\n🔗 {item['Link']}"
             )
 
-if __name__ == "__main__":
-    run()
-            if score >= 4:
-                enviar_telegram(f"💎 OPORTUNIDADE {score}/5\n{item['Titulo']}\nPreço: {preco}€\n{item['Link']}")
+        if ok:
+            hashes.add(h)
+
+            enviar_telegram(
+                f"🏠 {item['Fonte']}\n{item['Titulo'][:80]}\n💰 {preco}€\n🔗 {item['Link']}"
+            )
 
 if __name__ == "__main__":
     run()
