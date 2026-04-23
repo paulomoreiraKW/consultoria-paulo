@@ -1,0 +1,22 @@
+name: TESTE DE LIGACAO SHEET
+
+on:
+  workflow_dispatch: # Isto permite-te clicar num botão para correr
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Instalar Requests
+        run: pip install requests
+
+      - name: Executar Teste
+        run: python debug_ponte.py
