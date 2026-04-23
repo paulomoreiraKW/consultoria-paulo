@@ -2,17 +2,20 @@ import requests
 import xml.etree.ElementTree as ET
 import hashlib
 import pandas as pd
+import os
 from bridge import enviar_para_sheet
 
-SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
-SHEET_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
+SHEET_ID = os.getenv("SHEET_ID", "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-TELEGRAM_TOKEN = "8788076131:AAGwzFhxzD_H4iV2J0BmAP9k4rzEvcEoDSE"
-TELEGRAM_CHAT_ID = "477875361"
+SHEET_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
 
 ZONAS_ALVO = ["madeira", "azeméis", "feira", "ovar", "cambra", "arouca", "aveiro"]
 
 def enviar_telegram(msg):
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        return
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         requests.post(url, data={"chat_id": TELEGRAM_CHAT_ID, "text": msg}, timeout=10)
@@ -59,8 +62,9 @@ def carregar_hashes_existentes():
 
 def processar_imovirtual_rss():
     url = "https://www.imovirtual.com/comprar/moradia/aveiro/?search%5Bfilter_float_price%3Ato%5D=600000&format=xml"
+    headers = {"User-Agent": "Mozilla/5.0"}
     try:
-        r = requests.get(url, timeout=15)
+        r = requests.get(url, headers=headers, timeout=15)
         if r.status_code != 200: return []
         root = ET.fromstring(r.content)
         items = []
