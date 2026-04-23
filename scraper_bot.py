@@ -90,7 +90,7 @@ def run():
         h = hashlib.md5(f"{item['Link']}".encode()).hexdigest()
         if h in hashes_existentes: continue
         score = calcular_score_pm5d(item["Titulo"], preco)
-        if score < 3: continue
+        if score < 1: continue
         lead = {
             "Referencia": h[:8],
             "Titulo": item["Titulo"],
