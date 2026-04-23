@@ -21,15 +21,16 @@ def enviar_telegram(msg):
     except: pass
 
 def limpar_preco(texto_raw):
+    if not texto_raw: return 0
     try:
         numeros = re.findall(r'\d+', str(texto_raw))
         if not numeros: return 0
-        valor = "".join(numeros)
-        return float(valor)
+        return float("".join(numeros))
     except: return 0
 
 def calcular_score_pm5d(titulo, preco):
     p = float(preco)
+    if p <= 0: return 2
     if p < 5000: return 1
     t = titulo.lower()
     if any(w in t for w in ["terreno", "lote"]): ref = 80000
@@ -56,16 +57,35 @@ def scraper_custojusto():
         r = requests.get(url, headers=headers, timeout=15)
         html = r.text.lower()
         links = re.findall(r'href="(https://www.custojusto.pt/[^"]+)"', html)
-        for link in links[:50]:
+        for link in set(links):
             if any(z in link for z in ZONAS_ALVO):
                 items.append({
-                    "Titulo": "Imóvel CustoJusto",
-                    "PrecoRaw": "",
+                    "Titulo": "Imóvel CustoJusto (Ver Link)",
+                    "PrecoRaw": "0",
                     "Link": link,
                     "Fonte": "CustoJusto"
                 })
-    except Exception as e:
-        print(f"❌ Erro CJ: {e}")
+    except: pass
+    return items
+
+def scraper_kw_feira():
+    print("🔎 Scraping KW Area Feira...")
+    url = "https://www.kwportugal.pt/KWAreaFeira"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    items = []
+    try:
+        r = requests.get(url, headers=headers, timeout=15)
+        html = r.text.lower()
+        links = re.findall(r'href="(/imovel/[^"]+)"', html)
+        for link in set(links):
+            full_link = "https://www.kwportugal.pt" + link
+            items.append({
+                "Titulo": "Imóvel KW Area Feira",
+                "PrecoRaw": "0",
+                "Link": full_link,
+                "Fonte": "KWFeira"
+            })
+    except: pass
     return items
 
 def scraper_sapo():
@@ -91,16 +111,11 @@ def scraper_sapo():
 
 def run():
     print("🚀 INICIANDO PROCESSAMENTO")
-    leads_raw = scraper_custojusto() + scraper_sapo()
+    leads_raw = scraper_custojusto() + scraper_sapo() + scraper_kw_feira()
     
     if len(leads_raw) == 0:
         print("⚠️ Nenhum lead encontrado — enviando teste manual")
-        leads_raw = [{
-            "Titulo": "TESTE MANUAL",
-            "PrecoRaw": "250000 €",
-            "Link": "https://teste.pt",
-            "Fonte": "DEBUG"
-        }]
+        leads_raw = [{"Titulo": "TESTE MANUAL", "PrecoRaw": "250000", "Link": "https://teste.pt", "Fonte": "DEBUG"}]
 
     print(f"📡 Total bruto: {len(leads_raw)}")
     hashes_existentes = carregar_hashes_existentes()
@@ -109,12 +124,13 @@ def run():
         preco = limpar_preco(item["PrecoRaw"])
         score = calcular_score_pm5d(item["Titulo"], preco)
         
-        print(f"🚨 STATUS → {item['Fonte']} | {item['Titulo'][:30]} | {preco}€ | Score {score}")
+        print(f"🚨 STATUS → {item['Fonte']} | {preco}€ | Score {score}")
 
-        if score < 2: continue
-        h_str = f"{item['Titulo']}{preco}".strip().lower()
+        h_str = f"{item['Link']}".strip().lower()
         h = hashlib.md5(h_str.encode()).hexdigest()
-        if h in hashes_existentes: continue
+        
+        if h in hashes_existentes:
+            continue
 
         lead = {
             "Referencia": h[:8], "Titulo": item["Titulo"][:100], "Localidade": "Aveiro",
@@ -125,8 +141,11 @@ def run():
         
         ok = enviar_para_sheet(lead)
         print(f"📤 Resultado envio: {ok}")
-        if ok and score >= 4:
-            enviar_telegram(f"💎 OPORTUNIDADE {score}/5\n{item['Titulo'][:100]}\nPreço: {preco}€\n{item['Link']}")
+        
+        if ok:
+            hashes_existentes.add(h)
+            if score >= 4:
+                enviar_telegram(f"💎 OPORTUNIDADE {score}/5\n{item['Titulo']}\nPreço: {preco}€\n{item['Link']}")
 
 if __name__ == "__main__":
     run()
