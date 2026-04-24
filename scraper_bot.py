@@ -132,7 +132,7 @@ def run():
         h = hashlib.md5(item["Link"].encode()).hexdigest()
         if h in hashes:
             continue
-        lead = {
+lead = {
             "Referencia": h[:8],
             "Titulo": item["Titulo"],
             "Localidade": "Aveiro",
