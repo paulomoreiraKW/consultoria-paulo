@@ -126,7 +126,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 @st.fragment
-def render_carousel(df_data):
+def render_carousel_fragment(df_data):
     if not df_data.empty:
         if (time.time() - st.session_state.last_update) > 3:
             st.session_state.idx = (st.session_state.idx + 1) % len(df_data)
@@ -235,7 +235,7 @@ else:
         </div>""", unsafe_allow_html=True)
 
         if not df.empty:
-            render_carousel(df)
+            render_carousel_fragment(df)
             if st.button("🔎 Ver todos os imóveis disponíveis"):
                 st.session_state.page = "LOJA"
                 st.rerun()
