@@ -5,7 +5,7 @@ import pandas as pd
 import time
 
 # ==============================
-# ESTADO (NAV)
+# ESTADO (NOVO - NÃO ALTERA UI)
 # ==============================
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
@@ -53,91 +53,6 @@ except:
     df = pd.DataFrame()
 
 # ==============================
-# DETALHE (NOVO COMPLETO)
-# ==============================
-def render_detalhe():
-    row = st.session_state.get("selected_imovel", None)
-
-    if not row:
-        st.session_state.page = "LOJA"
-        st.rerun()
-
-    if st.button("← Voltar à Galeria de Ativos"):
-        st.session_state.page = "LOJA"
-        st.rerun()
-
-    preco = safe_float(row.get("Preço", 0))
-    area = safe_float(row.get("Área_Útil", 0))
-    valor_m2 = int(preco / area) if area > 0 else 0
-    ref = row.get("Referência", "N/A")
-
-    imagem = row.get("Capa_Manual", "") or row.get("Link_Fonte", "")
-    if not str(imagem).startswith("http"):
-        imagem = "https://via.placeholder.com/800x600.png?text=Imagem+PM5D"
-
-    st.markdown(f"""
-        <style>
-        .report-header {{
-            background-color: #1a1a1a;
-            color: white;
-            padding: 20px;
-            border-radius: 10px 10px 0 0;
-            border-bottom: 4px solid #bfa573;
-        }}
-        .info-grid {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }}
-        .info-item {{
-            background: #fdfaf5;
-            padding: 15px;
-            border-radius: 8px;
-        }}
-        .locked-data {{
-            background: #f0f0f0;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px dashed #bfa573;
-            text-align: center;
-            margin-top: 20px;
-        }}
-        </style>
-
-        <div class="report-header">
-            <h2>{row.get('Tipo','')} em {row.get('Localidade','')}</h2>
-            <small>Ref: {ref}</small>
-        </div>
-
-        <img src="{imagem}" style="width:100%; margin:15px 0; border-radius:10px;">
-
-        <div class="info-grid">
-            <div class="info-item">
-                <b>{preco:,.0f}€</b><br>Preço
-            </div>
-            <div class="info-item">
-                <b>{valor_m2}€/m²</b><br>Valor m²
-            </div>
-            <div class="info-item">
-                <b>{area} m²</b><br>Área
-            </div>
-            <div class="info-item">
-                <b style="color:#bfa573;">Oportunidade</b><br>Estado
-            </div>
-        </div>
-
-        <div class="locked-data">
-            🔒 Relatório Financeiro Completo Bloqueado
-        </div>
-    """, unsafe_allow_html=True)
-
-    msg = f"Olá Paulo, quero o relatório da Ref {ref}"
-    link = f"https://wa.me/351911995695?text={msg.replace(' ', '%20')}"
-
-    st.link_button("📲 Desbloquear via WhatsApp", link)
-
-# ==============================
 # ROUTER
 # ==============================
 if st.session_state.page == "LOJA":
@@ -175,13 +90,114 @@ if st.session_state.page == "LOJA":
 
     st.stop()
 
+# ==============================
+# DETALHE (UPGRADE VISUAL — SEM IMPACTO RESTO)
+# ==============================
 if st.session_state.page == "DETALHE":
-    render_detalhe()
+
+    row = st.session_state.selected_imovel
+
+    if not row:
+        st.session_state.page = "LOJA"
+        st.rerun()
+
+    if st.button("← Voltar à loja"):
+        st.session_state.page = "LOJA"
+        st.rerun()
+
+    preco = safe_float(row.get("Preço", 0))
+    area = safe_float(row.get("Área_Útil", 0))
+    valor_m2 = int(preco / area) if area > 0 else 0
+    ref = row.get("Referência", "N/A")
+
+    imagem = row.get("Capa_Manual", "") or row.get("Link Fonte", "")
+    if not str(imagem).startswith("http"):
+        imagem = "https://via.placeholder.com/800x600.png?text=Imagem+PM5D"
+
+    st.markdown(f"""
+        <style>
+        .report-header {{
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            border-bottom: 4px solid #bfa573;
+        }}
+        .info-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }}
+        .info-item {{
+            background: #fdfaf5;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }}
+        .locked-data {{
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px dashed #bfa573;
+            text-align: center;
+            margin-top: 20px;
+        }}
+        .premium-tag {{
+            background: #bfa573;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }}
+        </style>
+
+        <div class="report-header">
+            <span class="premium-tag">MÉTODO PM5D</span>
+            <h2 style="margin:10px 0; color:white;">
+                {row.get('Tipo','')} em {row.get('Localidade','')}
+            </h2>
+            <small>ID de Referência: {ref}</small>
+        </div>
+
+        <img src="{imagem}" style="width:100%; border-radius: 0 0 10px 10px; margin-bottom:20px;">
+
+        <div class="info-grid">
+            <div class="info-item">
+                <small>PREÇO</small><br>
+                <b>{preco:,.0f}€</b>
+            </div>
+            <div class="info-item">
+                <small>€/m²</small><br>
+                <b>{valor_m2}</b>
+            </div>
+            <div class="info-item">
+                <small>ÁREA</small><br>
+                <b>{area} m²</b>
+            </div>
+            <div class="info-item">
+                <small>ESTADO</small><br>
+                <b style="color:#bfa573;">OPORTUNIDADE</b>
+            </div>
+        </div>
+
+        <div class="locked-data">
+            🔒 Relatório financeiro completo disponível mediante contacto
+        </div>
+    """, unsafe_allow_html=True)
+
+    msg = f"Olá Paulo, solicito o relatório completo da Ref {ref}"
+    link = f"https://wa.me/351911995695?text={msg.replace(' ', '%20')}"
+
+    st.link_button("📲 Desbloquear Relatório", link)
+
     st.stop()
 
 # ==============================
-# HOME (INALTERADA)
+# HOME (100% IGUAL — NÃO MEXI)
 # ==============================
+
 fundo_marmore = get_base64("Background.svg")
 
 st.markdown(f"""
