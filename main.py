@@ -4,6 +4,18 @@ import os
 import pandas as pd
 import time
 
+if "page" not in st.session_state:
+    st.session_state.page = "HOME"
+
+if "selected_imovel" not in st.session_state:
+    st.session_state.selected_imovel = None
+
+if "idx" not in st.session_state:
+    st.session_state.idx = 0
+
+if "last_update" not in st.session_state:
+    st.session_state.last_update = time.time()
+
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
 def get_base64(bin_file):
@@ -11,6 +23,27 @@ def get_base64(bin_file):
         with open(bin_file, 'rb') as f:
             return base64.b64encode(f.read()).decode()
     return ""
+
+def safe_float(value):
+    try:
+        return float(str(value).replace("%","").replace(",",".").replace("€","").replace(" ","").strip())
+    except:
+        return 0
+
+SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
+URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
+
+try:
+    df = pd.read_csv(URL)
+    df = df.fillna("")
+    df = df[pd.to_numeric(df["Score_PM5D"], errors="coerce").fillna(0) >= 3]
+    if "Status_Scraping" in df.columns:
+        df = df[df["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
+    if "Decisão" in df.columns:
+        df = df[df["Decisão"].str.upper().isin(["APROVADO", "SIM", "OK"])]
+    df = df.reset_index(drop=True)
+except Exception:
+    df = pd.DataFrame()
 
 fundo_marmore = get_base64("Background.svg")
 
@@ -21,7 +54,6 @@ st.markdown(f"""
         background-size: cover;
         background-attachment: fixed;
     }}
-
     .main-protection-card {{
         background-color: rgba(253, 250, 245, 0.99);
         padding: 25px 35px 10px 35px;
@@ -30,7 +62,6 @@ st.markdown(f"""
         box-shadow: 0 15px 35px rgba(0,0,0,0.15);
         margin-bottom: 10px; 
     }}
-
     .white-solid-box {{
         background-color: #ffffff;
         padding: 20px;
@@ -39,7 +70,6 @@ st.markdown(f"""
         margin-bottom: 15px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }}
-
     .preview-window {{
         border: 2px dashed #bfa573;
         background-color: #ffffff;
@@ -50,9 +80,7 @@ st.markdown(f"""
         font-weight: 600;
         min-height: 250px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        box-shadow: inset 0 0 20px rgba(191, 165, 115, 0.08);
     }}
-
     .service-box {{
         background-color: white;
         padding: 18px;
@@ -62,10 +90,8 @@ st.markdown(f"""
         min-height: 155px;
         transition: transform 0.3s ease;
     }}
-    .service-box:hover {{ transform: translateY(-5px); }}
     .service-title {{ color: #1a1a1a; font-weight: 800; font-size: 15px; margin-bottom: 5px; display: block; }}
     .service-desc {{ color: #555; font-size: 12.5px; line-height: 1.4; }}
-
     .profile-frame {{
         width: 180px; height: 180px;
         border-radius: 50%; border: 4px solid #bfa573;
@@ -73,11 +99,9 @@ st.markdown(f"""
         background: white;
     }}
     .profile-frame img {{ width: 100%; height: 100%; object-fit: cover; }}
-
     .cargo-text {{ color: #1a1a1a !important; font-weight: 700 !important; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; }}
     .quote-style {{ font-style: italic; color: #bfa573; font-size: 15px; margin: 10px 0; border-left: 2px solid #bfa573; padding-left: 10px; }}
     .bio-text {{ font-size: 14px; color: #333; line-height: 1.5; }}
-
     div.stButton > button {{
         width: 100% !important;
         height: 52px !important;
@@ -85,54 +109,21 @@ st.markdown(f"""
         color: #1a1a1a !important;
         border: 1px solid #1a1a1a !important;
         font-weight: 600 !important;
-        text-transform: none !important;
         font-size: 14px !important;
-        margin-top: 5px;
     }}
     div.stButton > button:hover {{ background-color: #1a1a1a !important; color: white !important; }}
-
     .action-link {{
-        display: inline-block;
-        padding: 8px 15px;
-        background: #1a1a1a;
-        color: white !important;
-        text-decoration: none !important;
-        border-radius: 2px;
-        font-size: 11px;
-        font-weight: bold;
-        margin-top: 10px;
-        text-transform: uppercase;
+        display: inline-block; padding: 8px 15px; background: #1a1a1a; color: white !important;
+        text-decoration: none !important; border-radius: 2px; font-size: 11px; font-weight: bold;
+        margin-top: 10px; text-transform: uppercase;
     }}
-
     .legal-footer-box {{
         font-size: 11px; color: #444; text-align: center; padding: 25px;
         background: rgba(253, 250, 245, 0.99); border-radius: 10px;
         border: 1px dashed #bfa573; margin-top: 30px; line-height: 1.8;
     }}
     </style>
-    """, unsafe_allow_html=True)
-
-SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
-URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
-
-try:
-    df = pd.read_csv(URL)
-    df = df.fillna("")
-
-    df = df[pd.to_numeric(df["Score_PM5D"], errors="coerce").fillna(0) >= 3]
-
-    if "Status_Scraping" in df.columns:
-        df = df[df["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
-
-    if "Decisão" in df.columns:
-        df = df[df["Decisão"].str.upper().isin(["APROVADO", "SIM", "OK"])]
-
-    df = df.reset_index(drop=True)
-except Exception:
-    df = pd.DataFrame()
-
-if "idx" not in st.session_state:
-    st.session_state.idx = 0
+""", unsafe_allow_html=True)
 
 if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
     st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
@@ -144,78 +135,107 @@ with c3: st.link_button("📲 App Pessoal KW", "https://app.kw.com/KWNVLOD5AW4")
 
 st.write("<br>", unsafe_allow_html=True)
 
-st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
-col_l, col_r = st.columns([1, 1.8])
-
-with col_l:
-    if os.path.exists("paulo_moreira.png"):
-        img_b64 = get_base64("paulo_moreira.png")
-        st.markdown(f'<div class="profile-frame"><img src="data:image/png;base64,{img_b64}"></div>', unsafe_allow_html=True)
-    st.link_button("📸 Instagram", "https://www.instagram.com/paulomgmoreira/")
-    st.link_button("🔵 Facebook", "https://www.facebook.com/PMMConsultoriaEGestao/")
-
-with col_r:
-    st.markdown("""<div class="white-solid-box">
-        <div class="cargo-text">Consultor Imobiliário</div>
-        <h1 style="color:#1a1a1a; font-size:32px; font-weight:300; margin:5px 0;">Paulo Moreira</h1>
-        <div class="quote-style">"O sucesso de uma transação imobiliária depende de estratégia, não de sorte."</div>
-        <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
-    </div>""", unsafe_allow_html=True)
-
-    if "last_update" not in st.session_state:
-        st.session_state.last_update = time.time()
-
-    intervalo = 3 
-
-    if not df.empty:
-        agora = time.time()
-        if agora - st.session_state.last_update > intervalo:
-            st.session_state.idx = (st.session_state.idx + 1) % len(df)
-            st.session_state.last_update = agora
-            st.rerun()
-
-        row = df.iloc[st.session_state.idx]
-
-        imagem = row.get("Capa_Manual", "")
-        if not imagem or not str(imagem).startswith("http"):
-            imagem = "https://via.placeholder.com/400x300.png?text=PM+5D"
-
-        def safe_float(value):
-            try:
-                return float(str(value).replace("%","").replace(",",".").replace("€","").replace(" ","").strip())
-            except:
-                return 0
-
-        roi = safe_float(row.get("ROI_Percent", 0))
-        lucro = safe_float(row.get("Lucro_Flip", 0))
-        invest = safe_float(row.get("Investimento_Total", 0))
-        capex = safe_float(row.get("CAPEX_Estimado", 0))
-        renda = safe_float(row.get("Renda_Mensal", 0))
-        yield_val = safe_float(row.get("Yield_Euros_Ano", 0))
-
-        if roi > 25:
-            destaque = f"ROI ALTO {roi:.1f}%"
-        elif lucro > 50000:
-            destaque = f"FLIP +{lucro:,.0f}€"
-        elif renda > 0:
-            destaque = f"YIELD {renda:,.0f}€/mês"
-        elif yield_val > 0:
-            destaque = f"YIELD {yield_val:,.0f}€/ano"
-        else:
-            destaque = "Oportunidade em análise"
-
-        st.markdown(f"""
-        <div class="preview-window">
-            <img src="{imagem}" style="width:100%; border-radius:10px;">
-            <br><b>{row.get('Tipo','')} | {row.get('Localidade','')}</b><br>
-            <span style="color:#bfa573;">{destaque}</span>
-            <br><small style="color:#888;">Inv: {invest:,.0f}€ | CAPEX: {capex:,.0f}€</small>
-        </div>
-        """, unsafe_allow_html=True)
+if st.session_state.page == "LOJA":
+    st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
+    st.markdown('<div class="cargo-text" style="text-align:center; margin-bottom:20px;">Oportunidades Selecionadas</div>', unsafe_allow_html=True)
+    if st.button("← Voltar ao Perfil"):
+        st.session_state.page = "HOME"
+        st.rerun()
+    
+    if df.empty:
+        st.warning("A carregar ativos...")
     else:
-        st.markdown("""<div class="preview-window">Sincronizando Ativos...</div>""", unsafe_allow_html=True)
+        cols = st.columns(2)
+        for i, row in df.iterrows():
+            with cols[i % 2]:
+                preco = safe_float(row.get("Preço", 0))
+                st.markdown(f"""
+                <div class="white-solid-box" style="min-height:350px;">
+                    <img src="{row.get('Capa_Manual', '')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
+                    <b style="font-size:16px;">{row.get('Tipo')}</b><br>
+                    <span style="color:#666; font-size:13px;">{row.get('Localidade')}</span><br>
+                    <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(f"Ver Ficha Técnica Ref: {row.get('Referência')}", key=f"gal_{i}"):
+                    st.session_state.selected_imovel = row.to_dict()
+                    st.session_state.page = "DETALHE"
+                    st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+elif st.session_state.page == "DETALHE":
+    row = st.session_state.selected_imovel
+    st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
+    if st.button("← Voltar à Galeria"):
+        st.session_state.page = "LOJA"
+        st.rerun()
+    
+    if row:
+        preco = safe_float(row.get("Preço", 0))
+        area = safe_float(row.get("Área_Útil", 0))
+        ref = row.get("Referência", "N/A")
+        
+        st.markdown(f"""
+            <div style="background:#1a1a1a; color:white; padding:20px; border-radius:10px 10px 0 0; border-bottom:4px solid #bfa573;">
+                <h2 style="color:white; margin:0;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
+                <small>Referência Técnica: {ref}</small>
+            </div>
+            <img src="{row.get('Capa_Manual','')}" style="width:100%; border-radius:0 0 10px 10px; margin-bottom:20px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                <div class="white-solid-box" style="margin-bottom:0;">
+                    <small style="color:#888;">PREÇO</small><br><b style="font-size:22px;">{preco:,.0f}€</b>
+                </div>
+                <div class="white-solid-box" style="margin-bottom:0;">
+                    <small style="color:#888;">ÁREA ÚTIL</small><br><b style="font-size:22px;">{area} m²</b>
+                </div>
+            </div>
+            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center;">
+                <h4 style="margin:0; color:#1a1a1a;">📊 RELATÓRIO FINANCEIRO BLOQUEADO</h4>
+                <p style="font-size:13px; color:#666; margin:10px 0;">ROI Estimado, Plano de CAPEX e Projeção de Lucro Flip.</p>
+                <div style="font-size:20px; letter-spacing:3px; color:#ccc;">EXCLUSIVO PARA INVESTIDORES</div>
+            </div>
+        """, unsafe_allow_html=True)
+        msg = f"Olá Paulo, solicito o acesso ao Relatório Financeiro da Ref: {ref} em {row.get('Localidade','')}"
+        st.link_button("🔓 DESBLOQUEAR DADOS VIA WHATSAPP", f"https://wa.me/351911995695?text={msg.replace(' ','%20')}")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+else:
+    st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
+    col_l, col_r = st.columns([1, 1.8])
+    
+    with col_l:
+        if os.path.exists("paulo_moreira.png"):
+            img_b64 = get_base64("paulo_moreira.png")
+            st.markdown(f'<div class="profile-frame"><img src="data:image/png;base64,{img_b64}"></div>', unsafe_allow_html=True)
+        st.link_button("📸 Instagram", "https://www.instagram.com/paulomgmoreira/")
+        st.link_button("🔵 Facebook", "https://www.facebook.com/PMMConsultoriaEGestao/")
+
+    with col_r:
+        st.markdown("""<div class="white-solid-box">
+            <div class="cargo-text">Consultor Imobiliário</div>
+            <h1 style="color:#1a1a1a; font-size:32px; font-weight:300; margin:5px 0;">Paulo Moreira</h1>
+            <div class="quote-style">"O sucesso de uma transação imobiliária depende de estratégia, não de sorte."</div>
+            <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
+        </div>""", unsafe_allow_html=True)
+
+        if not df.empty:
+            if (time.time() - st.session_state.last_update) > 3:
+                st.session_state.idx = (st.session_state.idx + 1) % len(df)
+                st.session_state.last_update = time.time()
+                st.rerun()
+            row = df.iloc[st.session_state.idx]
+            st.markdown(f"""
+            <div class="preview-window">
+                <img src="{row.get('Capa_Manual','')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
+                <b>{row.get('Tipo')} | {row.get('Localidade')}</b>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("🔎 Ver todos os imóveis disponíveis"):
+                st.session_state.page = "LOJA"
+                st.rerun()
+        else:
+            st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 m1, m2 = st.columns(2)
@@ -225,7 +245,6 @@ with m1:
         <span class="service-desc">Análise profunda baseada em dados reais e comparativos para definir o valor certo de venda.</span><br>
         <a href="https://www.kwportugal.pt/pt/property-valuation" class="action-link">Avaliar Imóvel</a>
     </div>""", unsafe_allow_html=True)
-
     st.markdown("""<div class="service-box">
         <span class="service-title">⚖️ Apoio Jurídico</span>
         <span class="service-desc">Segurança total na documentação, elaboração de CPCV e acompanhamento rigoroso até à escritura.</span>
@@ -236,7 +255,6 @@ with m2:
         <span class="service-title">📣 Plano de Marketing</span>
         <span class="service-desc">Exposição premium em mais de 100 portais nacionais e internacionais com fotografia profissional.</span>
     </div>""", unsafe_allow_html=True)
-
     st.markdown(f"""<div class="service-box">
         <span class="service-title">🏦 Gestão de Crédito</span>
         <span class="service-desc">Intermediação de crédito certificada para encontrar as melhores condições de financiamento.</span><br>
