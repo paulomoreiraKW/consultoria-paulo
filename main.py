@@ -5,7 +5,7 @@ import pandas as pd
 import time
 
 # ==============================
-# ESTADO (NOVO - NÃO ALTERA UI)
+# ESTADO (NAV)
 # ==============================
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
@@ -53,6 +53,91 @@ except:
     df = pd.DataFrame()
 
 # ==============================
+# DETALHE (NOVO COMPLETO)
+# ==============================
+def render_detalhe():
+    row = st.session_state.get("selected_imovel", None)
+
+    if not row:
+        st.session_state.page = "LOJA"
+        st.rerun()
+
+    if st.button("← Voltar à Galeria de Ativos"):
+        st.session_state.page = "LOJA"
+        st.rerun()
+
+    preco = safe_float(row.get("Preço", 0))
+    area = safe_float(row.get("Área_Útil", 0))
+    valor_m2 = int(preco / area) if area > 0 else 0
+    ref = row.get("Referência", "N/A")
+
+    imagem = row.get("Capa_Manual", "") or row.get("Link_Fonte", "")
+    if not str(imagem).startswith("http"):
+        imagem = "https://via.placeholder.com/800x600.png?text=Imagem+PM5D"
+
+    st.markdown(f"""
+        <style>
+        .report-header {{
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            border-bottom: 4px solid #bfa573;
+        }}
+        .info-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }}
+        .info-item {{
+            background: #fdfaf5;
+            padding: 15px;
+            border-radius: 8px;
+        }}
+        .locked-data {{
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px dashed #bfa573;
+            text-align: center;
+            margin-top: 20px;
+        }}
+        </style>
+
+        <div class="report-header">
+            <h2>{row.get('Tipo','')} em {row.get('Localidade','')}</h2>
+            <small>Ref: {ref}</small>
+        </div>
+
+        <img src="{imagem}" style="width:100%; margin:15px 0; border-radius:10px;">
+
+        <div class="info-grid">
+            <div class="info-item">
+                <b>{preco:,.0f}€</b><br>Preço
+            </div>
+            <div class="info-item">
+                <b>{valor_m2}€/m²</b><br>Valor m²
+            </div>
+            <div class="info-item">
+                <b>{area} m²</b><br>Área
+            </div>
+            <div class="info-item">
+                <b style="color:#bfa573;">Oportunidade</b><br>Estado
+            </div>
+        </div>
+
+        <div class="locked-data">
+            🔒 Relatório Financeiro Completo Bloqueado
+        </div>
+    """, unsafe_allow_html=True)
+
+    msg = f"Olá Paulo, quero o relatório da Ref {ref}"
+    link = f"https://wa.me/351911995695?text={msg.replace(' ', '%20')}"
+
+    st.link_button("📲 Desbloquear via WhatsApp", link)
+
+# ==============================
 # ROUTER
 # ==============================
 if st.session_state.page == "LOJA":
@@ -91,36 +176,12 @@ if st.session_state.page == "LOJA":
     st.stop()
 
 if st.session_state.page == "DETALHE":
-    row = st.session_state.selected_imovel
-
-    if st.button("← Voltar à loja"):
-        st.session_state.page = "LOJA"
-        st.rerun()
-
-    if row:
-        preco = safe_float(row.get("Preço", 0))
-        area = safe_float(row.get("Área_Útil", 0))
-        valor_m2 = int(preco / area) if area > 0 else 0
-
-        st.title(f"{row.get('Tipo','')} - {row.get('Localidade','')}")
-
-        st.markdown(f"""
-        **Preço:** {preco:,.0f}€  
-        **Área:** {area} m²  
-        **Preço/m²:** {valor_m2}
-        """)
-
-        msg = f"Olá, tenho interesse no imóvel Ref {row.get('Referência','')}"
-        link = f"https://wa.me/351911995695?text={msg}"
-
-        st.link_button("📲 Falar no WhatsApp", link)
-
+    render_detalhe()
     st.stop()
 
 # ==============================
-# HOME (100% IGUAL)
+# HOME (INALTERADA)
 # ==============================
-
 fundo_marmore = get_base64("Background.svg")
 
 st.markdown(f"""
@@ -178,7 +239,6 @@ if not df.empty:
     </div>
     """, unsafe_allow_html=True)
 
-    # 👇 BOTÃO NOVO (ÚNICA ALTERAÇÃO REAL)
     if st.button("🔎 Ver todos os imóveis"):
         st.session_state.page = "LOJA"
         st.rerun()
