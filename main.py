@@ -53,6 +53,17 @@ st.markdown(f"""
         box-shadow: inset 0 0 20px rgba(191, 165, 115, 0.08);
     }}
 
+    .badge-estimado {{
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        margin-top: 5px;
+        border: 1px solid #ffeeba;
+        display: inline-block;
+    }}
+
     .service-box {{
         background-color: white;
         padding: 18px;
@@ -192,6 +203,12 @@ with col_r:
         capex = safe_float(row.get("CAPEX_Estimado", 0))
         renda = safe_float(row.get("Renda_Mensal", 0))
         yield_val = safe_float(row.get("Yield_Euros_Ano", 0))
+        
+        # Adição do cálculo de preço/m2
+        preco = safe_float(row.get("Preço", 0))
+        area = safe_float(row.get("Área_Útil", 0))
+        valor_m2 = int(preco / area) if area > 0 else 0
+        notas = str(row.get("Notas", ""))
 
         if roi > 25:
             destaque = f"ROI ALTO {roi:.1f}%"
@@ -204,12 +221,20 @@ with col_r:
         else:
             destaque = "Oportunidade em análise"
 
+        # Lógica do Badge de Área
+        badge_html = ""
+        if "AREA_ESTIMADA" in notas.upper():
+            badge_html = '<div class="badge-estimado">⚠️ Área Estimada (100m²)</div>'
+
         st.markdown(f"""
         <div class="preview-window">
             <img src="{imagem}" style="width:100%; border-radius:10px;">
             <br><b>{row.get('Tipo','')} | {row.get('Localidade','')}</b><br>
-            <span style="color:#bfa573;">{destaque}</span>
+            <span style="color:#bfa573;">{destaque}</span><br>
+            <span style="color:#1a1a1a; font-weight:bold;">{preco:,.0f}€ <small>({valor_m2}€/m²)</small></span>
+            {badge_html}
             <br><small style="color:#888;">Inv: {invest:,.0f}€ | CAPEX: {capex:,.0f}€</small>
+            <br><small style="color:#ccc; font-size:10px;">Ref: {row.get('Referência','')}</small>
         </div>
         """, unsafe_allow_html=True)
     else:
