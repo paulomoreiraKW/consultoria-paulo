@@ -32,10 +32,6 @@ def safe_float(value):
     except:
         return 0
 
-# ---------------- BACKGROUND ----------------
-bg = get_base64("Background.svg")
-perfil = get_base64("paulo_moreira.png")
-
 # ---------------- DATA ----------------
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
@@ -52,7 +48,9 @@ def load_data():
 
 df = load_data()
 
-# ---------------- STYLE ----------------
+# ---------------- BACKGROUND ----------------
+bg = get_base64("Background.svg")
+
 st.markdown(f"""
 <style>
 
@@ -62,42 +60,84 @@ st.markdown(f"""
     background-attachment: fixed;
 }}
 
-/* GLASS CARD */
-.glass {{
-    background: rgba(255,255,255,0.88);
-    backdrop-filter: blur(12px);
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    margin-bottom: 15px;
+/* CONTAINER PRINCIPAL */
+.box {{
+    background: rgba(255,255,255,0.92);
+    padding: 25px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }}
 
-/* PROFILE */
+/* CARDS */
+.card {{
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-bottom: 3px solid #bfa573;
+}}
+
+/* PREVIEW CONTROLADO */
+.preview {{
+    height: 260px;
+    overflow: hidden;
+    border-radius: 12px;
+}}
+
+.preview img {{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}}
+
+/* PERFIL */
 .profile {{
-    width:160px;
-    height:160px;
+    width:140px;
+    height:140px;
     border-radius:50%;
     overflow:hidden;
     margin:auto;
     border:4px solid #bfa573;
 }}
 
-.profile img {{
-    width:100%;
-    height:100%;
-    object-fit:cover;
+/* SERVIÇOS */
+.service {{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    border-bottom:3px solid #bfa573;
+    min-height:140px;
 }}
 
-/* BUTTON */
-div.stButton > button {{
-    background:white;
-    border-radius:12px;
-    height:48px;
-    font-weight:600;
+.footer {{
+    font-size:11px;
+    text-align:center;
+    margin-top:30px;
 }}
 
 </style>
 """, unsafe_allow_html=True)
+
+# ---------------- CAROUSEL ----------------
+def carousel(df):
+    if df.empty:
+        return
+
+    if time.time() - st.session_state.last_update > 3:
+        st.session_state.idx = (st.session_state.idx + 1) % len(df)
+        st.session_state.last_update = time.time()
+        st.rerun()
+
+    row = df.iloc[st.session_state.idx]
+
+    st.markdown(f"""
+    <div class="preview">
+        <img src="{row.get('Capa_Manual')}">
+    </div>
+    <b>{row.get('Tipo')}</b><br>
+    <span>{row.get('Localidade')}</span>
+    """, unsafe_allow_html=True)
 
 # ---------------- TOP BUTTONS ----------------
 c1, c2, c3 = st.columns(3)
@@ -108,44 +148,30 @@ with c2:
 with c3:
     st.link_button("📲 App KW", "https://app.kw.com/KWNVLOD5AW4")
 
-st.write("")
-
 # ---------------- HOME ----------------
 if st.session_state.page == "HOME":
 
-    col1, col2 = st.columns([1,2])
+    st.markdown('<div class="box">', unsafe_allow_html=True)
 
-    with col1:
-        if perfil:
-            st.markdown(f'<div class="profile"><img src="data:image/png;base64,{perfil}"></div>', unsafe_allow_html=True)
+    if os.path.exists("paulo_moreira.png"):
+        img = get_base64("paulo_moreira.png")
+        st.markdown(f'<div class="profile"><img src="data:image/png;base64,{img}" width="100%"></div>', unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("""
-        <div class="glass">
-        <h2>Paulo Moreira</h2>
-        <small>Private Real Estate Advisory</small><br><br>
-        Estratégia, dados e execução focada em investidores.
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown("### Paulo Moreira")
+    st.markdown("Consultoria Imobiliária Premium")
 
-    # destaque
-    if not df.empty:
-        row = df.iloc[0]
-
-        st.markdown(f"""
-        <div class="glass">
-            <img src="{row.get('Capa_Manual')}" style="width:100%; border-radius:12px;">
-            <b>{row.get('Tipo')}</b><br>
-            {row.get('Localidade')}
-        </div>
-        """, unsafe_allow_html=True)
+    carousel(df)
 
     if st.button("Ver Oportunidades"):
         st.session_state.page = "LOJA"
         st.rerun()
 
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # ---------------- LOJA ----------------
 elif st.session_state.page == "LOJA":
+
+    st.markdown('<div class="box">', unsafe_allow_html=True)
 
     if st.button("← Voltar"):
         st.session_state.page = "HOME"
@@ -155,13 +181,16 @@ elif st.session_state.page == "LOJA":
 
     for i, row in df.iterrows():
         with cols[i % 2]:
+
             preco = safe_float(row.get("Preço"))
 
             st.markdown(f"""
-            <div class="glass">
-                <img src="{row.get('Capa_Manual')}" style="width:100%; border-radius:12px;">
+            <div class="card">
+                <div class="preview">
+                    <img src="{row.get('Capa_Manual')}">
+                </div>
                 <b>{row.get('Tipo')}</b><br>
-                {row.get('Localidade')}<br><br>
+                <span>{row.get('Localidade')}</span><br>
                 <b>{preco:,.0f}€</b>
             </div>
             """, unsafe_allow_html=True)
@@ -171,10 +200,14 @@ elif st.session_state.page == "LOJA":
                 st.session_state.page = "DETALHE"
                 st.rerun()
 
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # ---------------- DETALHE ----------------
 elif st.session_state.page == "DETALHE":
 
     row = st.session_state.selected_imovel
+
+    st.markdown('<div class="box">', unsafe_allow_html=True)
 
     if st.button("← Voltar"):
         st.session_state.page = "LOJA"
@@ -184,43 +217,45 @@ elif st.session_state.page == "DETALHE":
         preco = safe_float(row.get("Preço"))
         ref = row.get("Referência")
 
-        st.markdown(f"""
-        <div class="glass">
-            <img src="{row.get('Capa_Manual')}" style="width:100%; border-radius:12px;">
-            <h2>{row.get('Tipo')}</h2>
-            {row.get('Localidade')}<br>
-            <b>{preco:,.0f}€</b>
+        st.image(row.get("Capa_Manual"))
 
-            <div style="margin-top:20px; border:1px dashed #aaa; padding:15px; border-radius:10px;">
-            🔒 Relatório Financeiro Premium<br>
-            ROI | Flip | Yield | CAPEX
-            </div>
+        st.markdown(f"### {row.get('Tipo')}")
+        st.markdown(row.get("Localidade"))
+        st.markdown(f"## {preco:,.0f}€")
+
+        st.markdown("""
+        <div style="border:2px dashed #bfa573; padding:20px; border-radius:10px; text-align:center;">
+        🔒 Relatório Financeiro Premium
         </div>
         """, unsafe_allow_html=True)
 
-        msg = f"Quero relatório do imóvel {ref}"
+        msg = f"Quero o relatório do imóvel {ref}"
         link = f"https://wa.me/351911995695?text={msg.replace(' ','%20')}"
+
         st.link_button("Desbloquear via WhatsApp", link)
 
-# ---------------- LOGOS ----------------
-st.write("")
-l1, l2, l3 = st.columns(3)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-with l1:
-    if os.path.exists("P.M.M..png"):
-        st.image("P.M.M..png", width=90)
+# ---------------- SERVIÇOS ----------------
+st.markdown('<div class="box">', unsafe_allow_html=True)
 
-with l2:
-    if os.path.exists("REAL ESTATE.svg"):
-        st.image("REAL ESTATE.svg", width=100)
+st.markdown("### Serviços")
 
-with l3:
-    if os.path.exists("area_feira.png"):
-        st.image("area_feira.png", width=100)
+s1, s2 = st.columns(2)
+
+with s1:
+    st.markdown('<div class="service">📈 Estudo de Mercado</div>', unsafe_allow_html=True)
+    st.markdown('<div class="service">⚖️ Apoio Jurídico</div>', unsafe_allow_html=True)
+
+with s2:
+    st.markdown('<div class="service">📣 Marketing Premium</div>', unsafe_allow_html=True)
+    st.markdown('<div class="service">🏦 Gestão de Crédito</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------- FOOTER ----------------
 st.markdown("""
-<div class="glass" style="text-align:center; font-size:12px;">
+<div class="footer">
 Resumo Plural, Lda. | Licença AMI 21331<br>
 Cada Market Center é de gestão independente
 </div>
