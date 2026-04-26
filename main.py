@@ -33,17 +33,22 @@ def safe_float(value):
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-try:
-    df = pd.read_csv(URL)
-    df = df.fillna("")
-    df = df[pd.to_numeric(df["Score_PM5D"], errors="coerce").fillna(0) >= 3]
-    if "Status_Scraping" in df.columns:
-        df = df[df["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
-    if "Decisão" in df.columns:
-        df = df[df["Decisão"].str.upper().isin(["APROVADO", "SIM", "OK"])]
-    df = df.reset_index(drop=True)
-except Exception:
-    df = pd.DataFrame()
+@st.cache_data(ttl=3600)
+def load_data(url):
+    try:
+        data = pd.read_csv(url)
+        data = data.fillna("")
+        if "Score_PM5D" in data.columns:
+            data = data[pd.to_numeric(data["Score_PM5D"], errors="coerce").fillna(0) >= 3]
+        if "Status_Scraping" in data.columns:
+            data = data[data["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
+        if "Decisão" in data.columns:
+            data = data[data["Decisão"].str.upper().isin(["APROVADO", "SIM", "OK"])]
+        return data.reset_index(drop=True)
+    except Exception:
+        return pd.DataFrame()
+
+df = load_data(URL)
 
 fundo_marmore = get_base64("Background.svg")
 
@@ -73,12 +78,12 @@ st.markdown(f"""
     .preview-window {{
         border: 2px dashed #bfa573;
         background-color: #ffffff;
-        padding: 20px;
+        padding: 10px;
         border-radius: 12px;
         text-align: center;
         color: #bfa573;
         font-weight: 600;
-        min-height: 250px;
+        min-height: 120px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
     }}
     .service-box {{
@@ -136,8 +141,8 @@ def render_carousel_fragment(df_data):
         row = df_data.iloc[st.session_state.idx]
         st.markdown(f"""
         <div class="preview-window">
-            <img src="{row.get('Capa_Manual','')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
-            <b>{row.get('Tipo')} | {row.get('Localidade')}</b>
+            <img src="{row.get('Capa_Manual','')}" style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:5px;">
+            <div style="font-size:12px;"><b>{row.get('Tipo')} | {row.get('Localidade')}</b></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -153,7 +158,6 @@ st.write("<br>", unsafe_allow_html=True)
 
 if st.session_state.page == "LOJA":
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
-    st.markdown('<div class="cargo-text" style="text-align:center; margin-bottom:20px;">Oportunidades Selecionadas</div>', unsafe_allow_html=True)
     if st.button("← Voltar ao Perfil"):
         st.session_state.page = "HOME"
         st.rerun()
@@ -192,11 +196,13 @@ elif st.session_state.page == "DETALHE":
         ref = row.get("Referência", "N/A")
         
         st.markdown(f"""
-            <div style="background:#1a1a1a; color:white; padding:20px; border-radius:10px 10px 0 0; border-bottom:4px solid #bfa573;">
-                <h2 style="color:white; margin:0;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
-                <small>Referência Técnica: {ref}</small>
+            <div class="white-solid-box" style="margin-top:15px;">
+                <h2 style="color:#1a1a1a; margin:0; font-weight:300;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
+                <small style="color:#888;">Referência Técnica: {ref}</small>
             </div>
-            <img src="{row.get('Capa_Manual','')}" style="width:100%; border-radius:0 0 10px 10px; margin-bottom:20px;">
+            <div style="width:100%; height:280px; overflow:hidden; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <img src="{row.get('Capa_Manual','')}" style="width:100%; height:100%; object-fit:cover; display:block;">
+            </div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
                 <div class="white-solid-box" style="margin-bottom:0;">
                     <small style="color:#888;">PREÇO</small><br><b style="font-size:22px;">{preco:,.0f}€</b>
@@ -205,14 +211,24 @@ elif st.session_state.page == "DETALHE":
                     <small style="color:#888;">ÁREA ÚTIL</small><br><b style="font-size:22px;">{area} m²</b>
                 </div>
             </div>
-            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center;">
-                <h4 style="margin:0; color:#1a1a1a;">📊 RELATÓRIO FINANCEIRO BLOQUEADO</h4>
-                <p style="font-size:13px; color:#666; margin:10px 0;">ROI Estimado, Plano de CAPEX e Projeção de Lucro Flip.</p>
-                <div style="font-size:20px; letter-spacing:3px; color:#ccc;">EXCLUSIVO PARA INVESTIDORES</div>
+            <div class="white-solid-box" style="background-color: #f9f9f9; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                <h3 style="color:#000000; margin-bottom:12px; font-weight:700;">Relatório Financeiro</h3>
+                <p style="color:#000000; font-weight:800; text-shadow: 1px 1px 1px rgba(255,255,255,1), 0px 0px 3px rgba(0,0,0,0.2); margin-bottom:10px; font-size:16px;">
+                    ROI estimado entre 15% a 22% em regime de Buy-to-Flip
+                </p>
+                <div style="color:#a6894a; font-weight:700; font-size:15px; text-shadow: 0.5px 0.5px 0px rgba(0,0,0,0.1);">
+                    Exclusivo para Investidores
+                </div>
             </div>
         """, unsafe_allow_html=True)
-        msg = f"Olá Paulo, solicito o acesso ao Relatório Financeiro da Ref: {ref} em {row.get('Localidade','')}"
-        st.link_button("🔓 DESBLOQUEAR DADOS VIA WHATSAPP", f"https://wa.me/351911995695?text={msg.replace(' ','%20')}")
+        url_whatsapp = f"https://wa.me/351912555122?text=Olá%20Paulo,%20gostaria%20de%20receber%20o%20Relatório%20Financeiro%20do%20imóvel%20Ref:%20{ref}"
+        st.markdown(f"""
+            <a href="{url_whatsapp}" target="_blank" style="text-decoration: none;">
+                <div style="background-color:#1a1a1a; color:white; text-align:center; padding:18px; border-radius:10px; font-weight:bold; margin-top:15px; font-size:17px; letter-spacing:1px;">
+                    🔓 Desbloquear Dados
+                </div>
+            </a>
+        """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
@@ -236,8 +252,10 @@ else:
 
         if not df.empty:
             render_carousel_fragment(df)
-            if st.button("🔎 Ver todos os imóveis disponíveis"):
+            st.write("")
+            if st.button("📂 VER TODOS OS IMÓVEIS DISPONÍVEIS", use_container_width=True, type="primary"):
                 st.session_state.page = "LOJA"
+                st.session_state.idx = 0
                 st.rerun()
         else:
             st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
