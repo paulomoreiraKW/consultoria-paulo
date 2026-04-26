@@ -7,6 +7,7 @@ import time
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="Paulo Moreira | Private Real Estate", layout="centered")
 
+# ---------------- SESSION ----------------
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
 
@@ -48,75 +49,102 @@ def load_data():
 
 df = load_data()
 
-# ---------------- STYLE ----------------
-st.markdown("""
+# ---------------- BACKGROUND ----------------
+fundo = get_base64("Background.svg")
+
+st.markdown(f"""
 <style>
 
-.stApp {
-    background: linear-gradient(180deg, #0f0f10 0%, #1a1a1c 100%);
-    color: white;
-}
+.stApp {{
+    background-image: url("data:image/svg+xml;base64,{fundo}");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+}}
 
-/* HEADER */
-.title {
+/* OVERLAY DARK */
+.stApp::before {{
+    content: "";
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(10,10,10,0.75);
+    z-index: -1;
+}}
+
+/* TEXT */
+.title {{
     text-align:center;
-    font-size:28px;
+    font-size:30px;
     font-weight:300;
-}
+    color:white;
+}}
 
-.sub {
+.sub {{
     text-align:center;
     color:#aaa;
     margin-bottom:20px;
-}
+}}
+
+/* PROFILE */
+.profile {{
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    overflow:hidden;
+    margin:auto;
+    border:3px solid rgba(255,255,255,0.2);
+}}
+
+.profile img {{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}}
 
 /* CARD */
-.card {
+.card {{
     background: rgba(255,255,255,0.05);
     padding:15px;
     border-radius:18px;
     backdrop-filter: blur(10px);
     border:1px solid rgba(255,255,255,0.08);
-    transition:0.3s;
-}
-
-.card:hover {
-    transform:scale(1.02);
-}
+    margin-bottom:15px;
+}}
 
 /* IMAGE */
-.img {
+.img {{
     width:100%;
     border-radius:12px;
-}
+}}
 
 /* BUTTON */
-div.stButton > button {
+div.stButton > button {{
     background:white;
     color:black;
     border-radius:12px;
     height:48px;
     border:none;
     font-weight:600;
-}
+}}
 
 /* LOCK */
-.lock {
+.lock {{
     border:1px dashed #666;
     padding:20px;
     border-radius:12px;
     text-align:center;
     margin-top:20px;
     color:#bbb;
-}
+}}
 
 /* FOOTER */
-.footer {
+.footer {{
     font-size:11px;
     text-align:center;
     color:#888;
     margin-top:40px;
-}
+}}
 
 </style>
 """, unsafe_allow_html=True)
@@ -143,10 +171,13 @@ def carousel(df):
 
 # ---------------- TOP BUTTONS ----------------
 c1, c2, c3 = st.columns(3)
+
 with c1:
     st.link_button("🎯 Avaliar", "https://www.kwportugal.pt/pt/property-valuation")
+
 with c2:
     st.link_button("🏦 Crédito", "https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform")
+
 with c3:
     st.link_button("📲 App KW", "https://app.kw.com/KWNVLOD5AW4")
 
@@ -154,6 +185,14 @@ st.write("")
 
 # ---------------- HOME ----------------
 if st.session_state.page == "HOME":
+
+    if os.path.exists("paulo_moreira.png"):
+        img = get_base64("paulo_moreira.png")
+        st.markdown(f"""
+        <div class="profile">
+            <img src="data:image/png;base64,{img}">
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown('<div class="title">Paulo Moreira</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub">Private Real Estate Advisory</div>', unsafe_allow_html=True)
@@ -254,6 +293,22 @@ with c2:
     st.link_button("📞 Ligar", "tel:+351911995695")
 with c3:
     st.link_button("🟢 WhatsApp", "https://wa.me/351911995695")
+
+# ---------------- LOGOS ----------------
+st.write("")
+l1, l2, l3 = st.columns(3)
+
+with l1:
+    if os.path.exists("P.M.M..png"):
+        st.image("P.M.M..png", width=90)
+
+with l2:
+    if os.path.exists("REAL ESTATE.svg"):
+        st.image("REAL ESTATE.svg", width=100)
+
+with l3:
+    if os.path.exists("area_feira.png"):
+        st.image("area_feira.png", width=100)
 
 # ---------------- FOOTER ----------------
 st.markdown("""
