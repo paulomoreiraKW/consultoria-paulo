@@ -3,6 +3,7 @@ import base64
 import os
 import pandas as pd
 import time
+from utils import calcular_score, get_zona_label
 
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
@@ -28,19 +29,17 @@ def safe_float(value):
     try:
         return float(str(value).replace("%","").replace(",",".").replace("€","").replace(" ","").strip())
     except:
-        return 0
+        return 0.0
 
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
-URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
+URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
 
 try:
     df = pd.read_csv(URL)
+    df.columns = df.columns.str.strip()
     df = df.fillna("")
-    df = df[pd.to_numeric(df["Score_PM5D"], errors="coerce").fillna(0) >= 3]
-    if "Status_Scraping" in df.columns:
-        df = df[df["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
-    if "Decisão" in df.columns:
-        df = df[df["Decisão"].str.upper().isin(["APROVADO", "SIM", "OK"])]
+    if "Decisao" in df.columns:
+        df = df[df["Decisao"].str.upper().str.strip().isin(["APROVADO", "OK", "SIM", "PUBLICAR"])]
     df = df.reset_index(drop=True)
 except Exception:
     df = pd.DataFrame()
@@ -163,18 +162,27 @@ if st.session_state.page == "LOJA":
     else:
         cols = st.columns(2)
         for i, row in df.iterrows():
+            preco = safe_float(row.get("Preco_Listagem"))
+            area = safe_float(row.get("Area_m2"))
+            score = calcular_score(row.get("Tipo"), preco, row.get("Localidade"), area)
+
+            if score < 3:
+                continue
+
             with cols[i % 2]:
-                preco = safe_float(row.get("Preço", 0))
                 st.markdown(f"""
                 <div class="white-solid-box" style="min-height:350px;">
                     <img src="{row.get('Capa_Manual', '')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
                     <b style="font-size:16px;">{row.get('Tipo')}</b><br>
                     <span style="color:#666; font-size:13px;">{row.get('Localidade')}</span><br>
-                    <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b>
+                    <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b><br>
+                    <span style="font-size:13px;">Score: {score}</span>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button(f"Ver Ficha Técnica Ref: {row.get('Referência')}", key=f"gal_{i}"):
-                    st.session_state.selected_imovel = row.to_dict()
+                if st.button(f"Ver Ficha Técnica Ref: {row.get('Referencia')}", key=f"gal_{i}"):
+                    row_dict = row.to_dict()
+                    row_dict['score_calculado'] = score
+                    st.session_state.selected_imovel = row_dict
                     st.session_state.page = "DETALHE"
                     st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
@@ -187,9 +195,12 @@ elif st.session_state.page == "DETALHE":
         st.rerun()
     
     if row:
-        preco = safe_float(row.get("Preço", 0))
-        area = safe_float(row.get("Área_Útil", 0))
-        ref = row.get("Referência", "N/A")
+        preco = safe_float(row.get("Preco_Listagem"))
+        area = safe_float(row.get("Area_m2"))
+        ref = row.get("Referencia", "N/A")
+        score = row.get('score_calculado')
+        zona = get_zona_label(row.get("Localidade"))
+        v_m2 = preco / area if area > 0 else 0
         
         st.markdown(f"""
             <div style="background:#1a1a1a; color:white; padding:20px; border-radius:10px 10px 0 0; border-bottom:4px solid #bfa573;">
@@ -205,7 +216,27 @@ elif st.session_state.page == "DETALHE":
                     <small style="color:#888;">ÁREA ÚTIL</small><br><b style="font-size:22px;">{area} m²</b>
                 </div>
             </div>
-            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center;">
+        """, unsafe_allow_html=True)
+
+        st.write("### Análise (Python)")
+        c_an1, c_an2, c_an3 = st.columns(3)
+        c_an1.metric("Score PM5D", f"{score}/5")
+        c_an2.metric("Valor m²", f"{v_m2:,.0f}€")
+        c_an3.metric("Zona", zona)
+
+        st.write("### Financeiro (Sheet)")
+        f1, f2 = st.columns(2)
+        with f1:
+            st.write(f"**IMT:** {row.get('IMT_2024')}")
+            st.write(f"**Selo:** {row.get('Selo')}")
+            st.write(f"**Investimento Total:** {row.get('Investimento_Total')}")
+        with f2:
+            st.write(f"**ROI Estimado:** {row.get('ROI_Percent')}")
+            st.write(f"**Yield Anual:** {row.get('Yield_Euros_Ano')}")
+            st.write(f"**Lucro Flip:** {row.get('Lucro_Flip')}")
+
+        st.markdown(f"""
+            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center; margin-top:20px;">
                 <h4 style="margin:0; color:#1a1a1a;">📊 RELATÓRIO FINANCEIRO BLOQUEADO</h4>
                 <p style="font-size:13px; color:#666; margin:10px 0;">ROI Estimado, Plano de CAPEX e Projeção de Lucro Flip.</p>
                 <div style="font-size:20px; letter-spacing:3px; color:#ccc;">EXCLUSIVO PARA INVESTIDORES</div>
