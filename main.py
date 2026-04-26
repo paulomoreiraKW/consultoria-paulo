@@ -124,21 +124,33 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-@st.fragment
-def render_carousel_fragment(df_data):
-    if not df_data.empty:
-        if (time.time() - st.session_state.last_update) > 3:
-            st.session_state.idx = (st.session_state.idx + 1) % len(df_data)
-            st.session_state.last_update = time.time()
-            st.rerun()
-        
-        row = df_data.iloc[st.session_state.idx]
-        st.markdown(f"""
-        <div class="preview-window">
-            <img src="{row.get('Capa_Manual','')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
-            <b>{row.get('Tipo')} | {row.get('Localidade')}</b>
-        </div>
-        """, unsafe_allow_html=True)
+def render_carousel(df_data):
+    if df_data.empty:
+        st.markdown('<div class="preview-window">Sem ativos disponíveis</div>', unsafe_allow_html=True)
+        return
+
+    if (time.time() - st.session_state.last_update) > 3:
+        st.session_state.idx = (st.session_state.idx + 1) % len(df_data)
+        st.session_state.last_update = time.time()
+
+    row = df_data.iloc[st.session_state.idx]
+
+    st.markdown(f"""
+    <div class="preview-window">
+        <img src="{row.get('Capa_Manual','')}" 
+             style="width:100%; border-radius:10px; margin-bottom:10px;">
+        <b>{row.get('Tipo')} | {row.get('Localidade')}</b>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.button("🔎 Ver este imóvel", key="preview_click"):
+        st.session_state.selected_imovel = row.to_dict()
+        st.session_state.page = "DETALHE"
+        st.rerun()
+
+    if st.button("📂 Ver todos os imóveis"):
+        st.session_state.page = "LOJA"
+        st.rerun()
 
 if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
     st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
