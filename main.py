@@ -1,9 +1,11 @@
 import streamlit as st
+import pandas as pd
 import base64
 import os
-import pandas as pd
 import time
-from utils import calcular_score, get_zona_label
+
+# ---------------- CONFIG ----------------
+st.set_page_config(page_title="Paulo Moreira | Private Real Estate", layout="centered")
 
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
@@ -17,318 +19,246 @@ if "idx" not in st.session_state:
 if "last_update" not in st.session_state:
     st.session_state.last_update = time.time()
 
-st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
-
-def get_base64(bin_file):
-    if os.path.exists(bin_file):
-        with open(bin_file, 'rb') as f:
+# ---------------- UTILS ----------------
+def get_base64(file):
+    if os.path.exists(file):
+        with open(file, "rb") as f:
             return base64.b64encode(f.read()).decode()
     return ""
 
 def safe_float(value):
     try:
-        return float(str(value).replace("%","").replace(",",".").replace("€","").replace(" ","").strip())
+        return float(str(value).replace("€","").replace(",","").strip())
     except:
-        return 0.0
+        return 0
 
+# ---------------- DATA ----------------
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
-URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid=0"
+URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-try:
-    df = pd.read_csv(URL)
-    df.columns = df.columns.str.strip()
-    df = df.fillna("")
-    if "Decisao" in df.columns:
-        df = df[df["Decisao"].str.upper().str.strip().isin(["APROVADO", "OK", "SIM", "PUBLICAR"])]
-    df = df.reset_index(drop=True)
-except Exception:
-    df = pd.DataFrame()
+@st.cache_data
+def load_data():
+    try:
+        df = pd.read_csv(URL)
+        df = df.fillna("")
+        df = df[pd.to_numeric(df["Score_PM5D"], errors="coerce").fillna(0) >= 3]
+        return df.reset_index(drop=True)
+    except:
+        return pd.DataFrame()
 
-fundo_marmore = get_base64("Background.svg")
+df = load_data()
 
-st.markdown(f"""
-    <style>
-    .stApp {{
-        background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
-        background-size: cover;
-        background-attachment: fixed;
-    }}
-    .main-protection-card {{
-        background-color: rgba(253, 250, 245, 0.99);
-        padding: 25px 35px 10px 35px;
-        border-radius: 15px;
-        border-left: 8px solid #bfa573;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        margin-bottom: 10px; 
-    }}
-    .white-solid-box {{
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        border-bottom: 3px solid #bfa573;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }}
-    .preview-window {{
-        border: 2px dashed #bfa573;
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        text-align: center;
-        color: #bfa573;
-        font-weight: 600;
-        min-height: 250px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }}
-    .service-box {{
-        background-color: white;
-        padding: 18px;
-        border-radius: 10px;
-        border-bottom: 3px solid #bfa573;
-        margin-bottom: 15px;
-        min-height: 155px;
-        transition: transform 0.3s ease;
-    }}
-    .service-title {{ color: #1a1a1a; font-weight: 800; font-size: 15px; margin-bottom: 5px; display: block; }}
-    .service-desc {{ color: #555; font-size: 12.5px; line-height: 1.4; }}
-    .profile-frame {{
-        width: 180px; height: 180px;
-        border-radius: 50%; border: 4px solid #bfa573;
-        overflow: hidden; margin: 0 auto 15px auto;
-        background: white;
-    }}
-    .profile-frame img {{ width: 100%; height: 100%; object-fit: cover; }}
-    .cargo-text {{ color: #1a1a1a !important; font-weight: 700 !important; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; }}
-    .quote-style {{ font-style: italic; color: #bfa573; font-size: 15px; margin: 10px 0; border-left: 2px solid #bfa573; padding-left: 10px; }}
-    .bio-text {{ font-size: 14px; color: #333; line-height: 1.5; }}
-    div.stButton > button {{
-        width: 100% !important;
-        height: 52px !important;
-        background-color: white !important;
-        color: #1a1a1a !important;
-        border: 1px solid #1a1a1a !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-    }}
-    div.stButton > button:hover {{ background-color: #1a1a1a !important; color: white !important; }}
-    .action-link {{
-        display: inline-block; padding: 8px 15px; background: #1a1a1a; color: white !important;
-        text-decoration: none !important; border-radius: 2px; font-size: 11px; font-weight: bold;
-        margin-top: 10px; text-transform: uppercase;
-    }}
-    .legal-footer-box {{
-        font-size: 11px; color: #444; text-align: center; padding: 25px;
-        background: rgba(253, 250, 245, 0.99); border-radius: 10px;
-        border: 1px dashed #bfa573; margin-top: 30px; line-height: 1.8;
-    }}
-    </style>
+# ---------------- STYLE ----------------
+st.markdown("""
+<style>
+
+.stApp {
+    background: linear-gradient(180deg, #0f0f10 0%, #1a1a1c 100%);
+    color: white;
+}
+
+/* HEADER */
+.title {
+    text-align:center;
+    font-size:28px;
+    font-weight:300;
+}
+
+.sub {
+    text-align:center;
+    color:#aaa;
+    margin-bottom:20px;
+}
+
+/* CARD */
+.card {
+    background: rgba(255,255,255,0.05);
+    padding:15px;
+    border-radius:18px;
+    backdrop-filter: blur(10px);
+    border:1px solid rgba(255,255,255,0.08);
+    transition:0.3s;
+}
+
+.card:hover {
+    transform:scale(1.02);
+}
+
+/* IMAGE */
+.img {
+    width:100%;
+    border-radius:12px;
+}
+
+/* BUTTON */
+div.stButton > button {
+    background:white;
+    color:black;
+    border-radius:12px;
+    height:48px;
+    border:none;
+    font-weight:600;
+}
+
+/* LOCK */
+.lock {
+    border:1px dashed #666;
+    padding:20px;
+    border-radius:12px;
+    text-align:center;
+    margin-top:20px;
+    color:#bbb;
+}
+
+/* FOOTER */
+.footer {
+    font-size:11px;
+    text-align:center;
+    color:#888;
+    margin-top:40px;
+}
+
+</style>
 """, unsafe_allow_html=True)
 
-def render_carousel(df_data):
-    if df_data.empty:
-        st.markdown('<div class="preview-window">Sem ativos disponíveis</div>', unsafe_allow_html=True)
+# ---------------- CAROUSEL ----------------
+def carousel(df):
+    if df.empty:
         return
 
-    if (time.time() - st.session_state.last_update) > 3:
-        st.session_state.idx = (st.session_state.idx + 1) % len(df_data)
+    if time.time() - st.session_state.last_update > 3:
+        st.session_state.idx = (st.session_state.idx + 1) % len(df)
         st.session_state.last_update = time.time()
+        st.rerun()
 
-    row = df_data.iloc[st.session_state.idx]
+    row = df.iloc[st.session_state.idx]
 
     st.markdown(f"""
-    <div class="preview-window">
-        <img src="{row.get('Capa_Manual','')}" 
-             style="width:100%; border-radius:10px; margin-bottom:10px;">
-        <b>{row.get('Tipo')} | {row.get('Localidade')}</b>
+    <div class="card">
+        <img src="{row.get('Capa_Manual')}" class="img">
+        <b>{row.get('Tipo')}</b><br>
+        <span style="color:#aaa">{row.get('Localidade')}</span>
     </div>
     """, unsafe_allow_html=True)
 
-    if st.button("🔎 Ver este imóvel", key="preview_click"):
-        st.session_state.selected_imovel = row.to_dict()
-        st.session_state.page = "DETALHE"
-        st.rerun()
+# ---------------- TOP BUTTONS ----------------
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.link_button("🎯 Avaliar", "https://www.kwportugal.pt/pt/property-valuation")
+with c2:
+    st.link_button("🏦 Crédito", "https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform")
+with c3:
+    st.link_button("📲 App KW", "https://app.kw.com/KWNVLOD5AW4")
 
-    if st.button("📂 Ver todos os imóveis"):
+st.write("")
+
+# ---------------- HOME ----------------
+if st.session_state.page == "HOME":
+
+    st.markdown('<div class="title">Paulo Moreira</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub">Private Real Estate Advisory</div>', unsafe_allow_html=True)
+
+    carousel(df)
+
+    if st.button("Ver Oportunidades"):
         st.session_state.page = "LOJA"
         st.rerun()
 
-if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
-    st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
+# ---------------- LOJA ----------------
+elif st.session_state.page == "LOJA":
 
-c1, c2, c3 = st.columns(3)
-with c1: st.link_button("🎯 Avaliar Imóvel", "https://www.kwportugal.pt/pt/property-valuation")
-with c2: st.link_button("🏦 Simular Crédito", "https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform")
-with c3: st.link_button("📲 App Pessoal KW", "https://app.kw.com/KWNVLOD5AW4")
-
-st.write("<br>", unsafe_allow_html=True)
-
-if st.session_state.page == "LOJA":
-    st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
-    st.markdown('<div class="cargo-text" style="text-align:center; margin-bottom:20px;">Oportunidades Selecionadas</div>', unsafe_allow_html=True)
-    if st.button("← Voltar ao Perfil"):
+    if st.button("← Voltar"):
         st.session_state.page = "HOME"
         st.rerun()
-    
-    if df.empty:
-        st.warning("A carregar ativos...")
-    else:
-        cols = st.columns(2)
-        for i, row in df.iterrows():
-            preco = safe_float(row.get("Preco_Listagem"))
-            area = safe_float(row.get("Area_m2"))
-            score = calcular_score(row.get("Tipo"), preco, row.get("Localidade"), area)
 
-            if score < 3:
-                continue
+    cols = st.columns(2)
 
-            with cols[i % 2]:
-                st.markdown(f"""
-                <div class="white-solid-box" style="min-height:350px;">
-                    <img src="{row.get('Capa_Manual', '')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
-                    <b style="font-size:16px;">{row.get('Tipo')}</b><br>
-                    <span style="color:#666; font-size:13px;">{row.get('Localidade')}</span><br>
-                    <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b><br>
-                    <span style="font-size:13px;">Score: {score}</span>
-                </div>
-                """, unsafe_allow_html=True)
-                if st.button(f"Ver Ficha Técnica Ref: {row.get('Referencia')}", key=f"gal_{i}"):
-                    row_dict = row.to_dict()
-                    row_dict['score_calculado'] = score
-                    st.session_state.selected_imovel = row_dict
-                    st.session_state.page = "DETALHE"
-                    st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    for i, row in df.iterrows():
+        with cols[i % 2]:
+            preco = safe_float(row.get("Preço"))
 
+            st.markdown(f"""
+            <div class="card">
+                <img src="{row.get('Capa_Manual')}" class="img">
+                <b>{row.get('Tipo')}</b><br>
+                <span style="color:#aaa">{row.get('Localidade')}</span><br>
+                <b>{preco:,.0f}€</b>
+            </div>
+            """, unsafe_allow_html=True)
+
+            if st.button("Ver Detalhe", key=i):
+                st.session_state.selected_imovel = row.to_dict()
+                st.session_state.page = "DETALHE"
+                st.rerun()
+
+# ---------------- DETALHE ----------------
 elif st.session_state.page == "DETALHE":
+
     row = st.session_state.selected_imovel
-    st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
-    if st.button("← Voltar à Galeria"):
+
+    if st.button("← Voltar"):
         st.session_state.page = "LOJA"
         st.rerun()
-    
+
     if row:
-        preco = safe_float(row.get("Preco_Listagem"))
-        area = safe_float(row.get("Area_m2"))
-        ref = row.get("Referencia", "N/A")
-        score = row.get('score_calculado')
-        zona = get_zona_label(row.get("Localidade"))
-        v_m2 = preco / area if area > 0 else 0
-        
-        st.markdown(f"""
-            <div style="background:#1a1a1a; color:white; padding:20px; border-radius:10px 10px 0 0; border-bottom:4px solid #bfa573;">
-                <h2 style="color:white; margin:0;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
-                <small>Referência Técnica: {ref}</small>
-            </div>
-            <img src="{row.get('Capa_Manual','')}" style="width:100%; border-radius:0 0 10px 10px; margin-bottom:20px;">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
-                <div class="white-solid-box" style="margin-bottom:0;">
-                    <small style="color:#888;">PREÇO</small><br><b style="font-size:22px;">{preco:,.0f}€</b>
-                </div>
-                <div class="white-solid-box" style="margin-bottom:0;">
-                    <small style="color:#888;">ÁREA ÚTIL</small><br><b style="font-size:22px;">{area} m²</b>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+        preco = safe_float(row.get("Preço"))
+        ref = row.get("Referência")
 
-        st.write("### Análise (Python)")
-        c_an1, c_an2, c_an3 = st.columns(3)
-        c_an1.metric("Score PM5D", f"{score}/5")
-        c_an2.metric("Valor m²", f"{v_m2:,.0f}€")
-        c_an3.metric("Zona", zona)
-
-        st.write("### Financeiro (Sheet)")
-        f1, f2 = st.columns(2)
-        with f1:
-            st.write(f"**IMT:** {row.get('IMT_2024')}")
-            st.write(f"**Selo:** {row.get('Selo')}")
-            st.write(f"**Investimento Total:** {row.get('Investimento_Total')}")
-        with f2:
-            st.write(f"**ROI Estimado:** {row.get('ROI_Percent')}")
-            st.write(f"**Yield Anual:** {row.get('Yield_Euros_Ano')}")
-            st.write(f"**Lucro Flip:** {row.get('Lucro_Flip')}")
+        st.image(row.get("Capa_Manual"))
 
         st.markdown(f"""
-            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center; margin-top:20px;">
-                <h4 style="margin:0; color:#1a1a1a;">📊 RELATÓRIO FINANCEIRO BLOQUEADO</h4>
-                <p style="font-size:13px; color:#666; margin:10px 0;">ROI Estimado, Plano de CAPEX e Projeção de Lucro Flip.</p>
-                <div style="font-size:20px; letter-spacing:3px; color:#ccc;">EXCLUSIVO PARA INVESTIDORES</div>
-            </div>
+        <h2>{row.get('Tipo')}</h2>
+        <span style="color:#aaa">{row.get('Localidade')}</span>
+        <h3>{preco:,.0f}€</h3>
         """, unsafe_allow_html=True)
-        msg = f"Olá Paulo, solicito o acesso ao Relatório Financeiro da Ref: {ref} em {row.get('Localidade','')}"
-        st.link_button("🔓 DESBLOQUEAR DADOS VIA WHATSAPP", f"https://wa.me/351911995695?text={msg.replace(' ','%20')}")
-    st.markdown('</div>', unsafe_allow_html=True)
 
-else:
-    st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
-    col_l, col_r = st.columns([1, 1.8])
-    
-    with col_l:
-        if os.path.exists("paulo_moreira.png"):
-            img_b64 = get_base64("paulo_moreira.png")
-            st.markdown(f'<div class="profile-frame"><img src="data:image/png;base64,{img_b64}"></div>', unsafe_allow_html=True)
-        st.link_button("📸 Instagram", "https://www.instagram.com/paulomgmoreira/")
-        st.link_button("🔵 Facebook", "https://www.facebook.com/PMMConsultoriaEGestao/")
+        st.markdown("""
+        <div class="lock">
+        🔒 Relatório Financeiro Premium<br><br>
+        ROI | Flip | Yield | CAPEX
+        </div>
+        """, unsafe_allow_html=True)
 
-    with col_r:
-        st.markdown("""<div class="white-solid-box">
-            <div class="cargo-text">Consultor Imobiliário</div>
-            <h1 style="color:#1a1a1a; font-size:32px; font-weight:300; margin:5px 0;">Paulo Moreira</h1>
-            <div class="quote-style">"O sucesso de uma transação imobiliária depende de estratégia, não de sorte."</div>
-            <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
-        </div>""", unsafe_allow_html=True)
+        msg = f"Quero o relatório do imóvel {ref}"
+        link = f"https://wa.me/351911995695?text={msg.replace(' ','%20')}"
 
-        if not df.empty:
-            render_carousel_fragment(df)
-            if st.button("🔎 Ver todos os imóveis disponíveis"):
-                st.session_state.page = "LOJA"
-                st.rerun()
-        else:
-            st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.link_button("Desbloquear via WhatsApp", link)
 
-st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
-m1, m2 = st.columns(2)
-with m1:
-    st.markdown(f"""<div class="service-box">
-        <span class="service-title">📈 Estudo de Mercado</span>
-        <span class="service-desc">Análise profunda baseada em dados reais e comparativos para definir o valor certo de venda.</span><br>
-        <a href="https://www.kwportugal.pt/pt/property-valuation" class="action-link">Avaliar Imóvel</a>
-    </div>""", unsafe_allow_html=True)
-    st.markdown("""<div class="service-box">
-        <span class="service-title">⚖️ Apoio Jurídico</span>
-        <span class="service-desc">Segurança total na documentação, elaboração de CPCV e acompanhamento rigoroso até à escritura.</span>
-    </div>""", unsafe_allow_html=True)
+# ---------------- SERVIÇOS ----------------
+st.write("")
+st.markdown("### Serviços")
 
-with m2:
-    st.markdown("""<div class="service-box">
-        <span class="service-title">📣 Plano de Marketing</span>
-        <span class="service-desc">Exposição premium em mais de 100 portais nacionais e internacionais com fotografia profissional.</span>
-    </div>""", unsafe_allow_html=True)
-    st.markdown(f"""<div class="service-box">
-        <span class="service-title">🏦 Gestão de Crédito</span>
-        <span class="service-desc">Intermediação de crédito certificada para encontrar as melhores condições de financiamento.</span><br>
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform" class="action-link">Simular Crédito</a>
-    </div>""", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+s1, s2 = st.columns(2)
 
-st.write("<br>", unsafe_allow_html=True)
-ba, bb, bc = st.columns(3)
-with ba: st.link_button("⭐ Google Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
-with bb: st.link_button("📞 Ligar Agora", "tel:+351911995695")
-with bc: st.link_button("🟢 Whatsapp", "https://wa.me/351911995695")
+with s1:
+    st.markdown("📈 **Estudo de Mercado**")
+    st.markdown("Definição estratégica de preço com base em dados reais.")
 
-st.write("<br>", unsafe_allow_html=True)
-f1, f2, f3 = st.columns([1, 1, 1])
-with f1:
-    if os.path.exists("P.M.M..png"): st.image("P.M.M..png", width=100)
-with f2:
-    if os.path.exists("REAL ESTATE.svg"): st.image("REAL ESTATE.svg", width=110)
-with f3:
-    if os.path.exists("area_feira.png"): st.image("area_feira.png", width=110)
+    st.markdown("⚖️ **Apoio Jurídico**")
+    st.markdown("Acompanhamento completo até escritura.")
 
-st.markdown("""<div class="legal-footer-box">
-    <b>Resumo Plural, Lda.</b> - Licença AMI 21331 - Pessoa Coletiva 517 033 224 <br>
-    Morada comercial: Rua Estrada Nacional, nº 1190, 1200 – Zona Ind. do Roligo, 4520-115 Espargo <br>
-    Tel.: 256 313 054 | kwareafeira@kwportugal.pt | www.kwportugal.pt | <br>
-    <b>Cada Market Center é de gestão independente</b>
-</div>""", unsafe_allow_html=True)
+with s2:
+    st.markdown("📣 **Marketing Premium**")
+    st.markdown("Exposição em +100 portais.")
+
+    st.markdown("🏦 **Gestão de Crédito**")
+    st.markdown("Soluções financeiras otimizadas.")
+
+# ---------------- CONTACTOS ----------------
+st.write("")
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    st.link_button("⭐ Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
+with c2:
+    st.link_button("📞 Ligar", "tel:+351911995695")
+with c3:
+    st.link_button("🟢 WhatsApp", "https://wa.me/351911995695")
+
+# ---------------- FOOTER ----------------
+st.markdown("""
+<div class="footer">
+Resumo Plural, Lda. | Licença AMI 21331<br>
+Cada Market Center é de gestão independente
+</div>
+""", unsafe_allow_html=True)
