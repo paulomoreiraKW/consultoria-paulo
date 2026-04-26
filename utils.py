@@ -1,35 +1,51 @@
+
+import re
 import unicodedata
 from config import REFERENCIAIS_MERCADO_2026
 
 def normalizar(txt):
-    if not txt: return ""
+    if not txt:
+        return ""
     txt = str(txt).lower()
     txt = unicodedata.normalize("NFD", txt).encode("ascii", "ignore").decode("utf-8")
     return txt
 
-def safe_float(value):
-    if not value or value == "": return 0.0
-    try:
-        cleaned = str(value).replace('€', '').replace('%', '').replace(' ', '').replace('\xa0', '').strip()
-        cleaned = cleaned.replace('.', '').replace(',', '.')
-        return float(cleaned)
-    except:
-        return 0.0
-
 def get_zona_data(localidade):
     loc = normalizar(localidade)
     for zona, dados in REFERENCIAIS_MERCADO_2026.items():
-        if zona == "DEFAULT": continue
+        if zona == "DEFAULT":
+            continue
         if any(normalizar(f) in loc for f in dados["freguesias"]):
             return dados
     return REFERENCIAIS_MERCADO_2026["DEFAULT"]
 
-def calcular_score(titulo_completo, preco, localidade, area):
-    if preco <= 0: return 1
+def get_zona_label(localidade):
+    loc = normalizar(localidade)
+    for zona, dados in REFERENCIAIS_MERCADO_2026.items():
+        if zona == "DEFAULT":
+            continue
+        if any(normalizar(f) in loc for f in dados["freguesias"]):
+            return zona.replace("_", " ")
+    return "ZONA C"
+
+def detectar_tipologia(titulo):
+    t = normalizar(titulo)
+    if "moradia" in t:
+        return "Moradia"
+    elif "terreno" in t:
+        return "Terreno"
+    elif any(w in t for w in ["pavilhao", "armazem", "industrial"]):
+        return "Industrial"
+    else:
+        return "Apartamento"
+
+def calcular_score(titulo, preco, localidade, area):
+    if preco <= 0:
+        return 1
     area_calculo = area if area > 0 else 100
     valor_m2 = preco / area_calculo
     zona = get_zona_data(localidade)
-    t = normalizar(titulo_completo)
+    t = normalizar(titulo)
     if any(w in t for w in ["novo", "nova", "construcao"]):
         meta = zona["novo"]
     elif any(w in t for w in ["industrial", "pavilhao", "armazem"]):
