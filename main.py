@@ -59,6 +59,34 @@ st.markdown(f"""
         background-size: cover;
         background-attachment: fixed;
     }}
+    
+    /* --- Estilo Padronizado dos Botões (Baseado no Simular Crédito) --- */
+    div.stButton > button {{
+        width: 100% !important;
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
+        border: 1px solid #e0e0e0 !important;
+        border-radius: 12px !important;
+        font-weight: 500 !important;
+        padding: 10px 20px !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    }}
+    
+    div.stButton > button:hover {{
+        background-color: #f8f8f8 !important;
+        border-color: #bfa573 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+    }}
+
+    /* --- Exceções: Botões dentro das Caixas de Serviço (Pretos) --- */
+    .service-box .action-link {{
+        display: inline-block; padding: 10px 20px; background: #1a1a1a; color: white !important;
+        text-decoration: none !important; border-radius: 4px; font-size: 12px; font-weight: bold;
+        margin-top: 10px; text-transform: uppercase; text-align: center; width: 100%;
+    }}
+
     .main-protection-card {{
         background-color: rgba(253, 250, 245, 0.99);
         padding: 25px 35px 10px 35px;
@@ -93,7 +121,6 @@ st.markdown(f"""
         border-bottom: 3px solid #bfa573;
         margin-bottom: 15px;
         min-height: 155px;
-        transition: transform 0.3s ease;
     }}
     .service-title {{ color: #1a1a1a; font-weight: 800; font-size: 15px; margin-bottom: 5px; display: block; }}
     .service-desc {{ color: #555; font-size: 12.5px; line-height: 1.4; }}
@@ -107,21 +134,7 @@ st.markdown(f"""
     .cargo-text {{ color: #1a1a1a !important; font-weight: 700 !important; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; }}
     .quote-style {{ font-style: italic; color: #bfa573; font-size: 15px; margin: 10px 0; border-left: 2px solid #bfa573; padding-left: 10px; }}
     .bio-text {{ font-size: 14px; color: #333; line-height: 1.5; }}
-    div.stButton > button {{
-        width: 100% !important;
-        height: 52px !important;
-        background-color: white !important;
-        color: #1a1a1a !important;
-        border: 1px solid #1a1a1a !important;
-        font-weight: 600 !important;
-        font-size: 14px !important;
-    }}
-    div.stButton > button:hover {{ background-color: #1a1a1a !important; color: white !important; }}
-    .action-link {{
-        display: inline-block; padding: 8px 15px; background: #1a1a1a; color: white !important;
-        text-decoration: none !important; border-radius: 2px; font-size: 11px; font-weight: bold;
-        margin-top: 10px; text-transform: uppercase;
-    }}
+    
     .legal-footer-box {{
         font-size: 11px; color: #444; text-align: center; padding: 25px;
         background: rgba(253, 250, 245, 0.99); border-radius: 10px;
@@ -177,7 +190,7 @@ if st.session_state.page == "LOJA":
                     <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button(f"Ver Ficha Técnica Ref: {row.get('Referência')}", key=f"gal_{i}"):
+                if st.button(f"Ficha Técnica Ref: {row.get('Referência')}", key=f"gal_{i}"):
                     st.session_state.selected_imovel = row.to_dict()
                     st.session_state.page = "DETALHE"
                     st.rerun()
@@ -244,13 +257,13 @@ else:
             <div class="cargo-text">Consultor Imobiliário</div>
             <h1 style="color:#1a1a1a; font-size:32px; font-weight:300; margin:5px 0;">Paulo Moreira</h1>
             <div class="quote-style">"O sucesso de uma transação imobiliária depende de estratégia, não de sorte."</div>
-            <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excellence.</div>
+            <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
         </div>""", unsafe_allow_html=True)
 
         if not df.empty:
             render_carousel_fragment(df)
             st.write("")
-            if st.button("📂 VER TODOS OS IMÓVEIS DISPONÍVEIS", use_container_width=True, type="primary"):
+            if st.button("📂 VER TODOS OS IMÓVEIS DISPONÍVEIS", use_container_width=True):
                 st.session_state.page = "LOJA"
                 st.session_state.idx = 0
                 st.rerun()
