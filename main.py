@@ -304,7 +304,7 @@ elif st.session_state.page == "DETALHE":
 
         lead_contacto = st.text_input("Para mais detalhes, preencha com:", placeholder="Seu Nome ou Email...")
 
-        if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
+if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
             if lead_contacto:
                 e_email = re.match(r"[^@]+@[^@]+\.[^@]+", lead_contacto)
                 e_telefone = len(re.sub(r"\D", "", lead_contacto)) >= 9
@@ -327,12 +327,18 @@ elif st.session_state.page == "DETALHE":
                         "relatorio_adn": descritivo_adn,
                         "simulou": foi_simulado
                     }
+
                     enviar_para_sheet(dados_relatorio)
+
+                    if e_email:
+                        st.success(f"✅ Dossier técnico preparado para {lead_contacto}.")
+                        st.info("O rascunho detalhado foi gerado com sucesso.")
                     
-                    st.success("Dados validados. A abrir ligação prioritária...")
-                    msg_wa = f"Olá Paulo, Verifiquei os resultados {ref}. Nome: {lead_contacto}. Projeção: {lucro_estimado:,.2f}€."
-                    url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
-                    st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
+                    if e_telefone:
+                        st.success("✅ Validação concluída. A abrir WhatsApp...")
+                        msg_wa = f"Olá Paulo, Verifiquei os resultados {ref}. Nome: {lead_contacto}. Projeção: {lucro_estimado:,.2f}€."
+                        url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
+                        st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
                 else:
                     st.error("Por favor, insira um e-mail ou contacto telefónico válido.")
             else:
