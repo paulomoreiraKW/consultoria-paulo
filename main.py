@@ -239,7 +239,7 @@ elif st.session_state.page == "DETALHE":
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("""
+st.markdown("""
             <style>
                 /* Alinhamento do Título e Labels */
                 .titulo-simulador {
@@ -249,8 +249,8 @@ elif st.session_state.page == "DETALHE":
                     font-weight: bold;
                     letter-spacing: 1px;
                     border-bottom: 1px solid #eee;
-                    padding-bottom: 10px;
-                    margin-bottom: 20px;
+                    padding-bottom: 5px; /* Reduzido */
+                    margin-bottom: 10px; /* Reduzido */
                     text-transform: uppercase;
                 }
                 div[data-testid="stColumn"]:nth-of-type(2) label {
@@ -259,8 +259,8 @@ elif st.session_state.page == "DETALHE":
                     width: 100%;
                 }
             </style>
-            <div style="background-color: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #bfa573; 
-                        margin: 10px auto; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div style="background-color: #ffffff; padding: 10px 25px; border-radius: 12px; border: 1px solid #bfa573; 
+                        margin: 5px auto; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                 <p class="titulo-simulador">🛠️ Simulador de Investimento</p>
         """, unsafe_allow_html=True)
         
