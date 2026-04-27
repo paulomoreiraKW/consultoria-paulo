@@ -1,6 +1,3 @@
-Aqui tens o código completo e corrigido, com o texto da metodologia mais escuro, em negrito e a linha divisória com maior visibilidade, mantendo toda a estrutura anterior intacta:
-
-```python
 import streamlit as st
 import base64
 import os
