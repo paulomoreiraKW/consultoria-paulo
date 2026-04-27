@@ -60,8 +60,8 @@ st.markdown(f"""
         background-attachment: fixed;
     }}
     
-    /* --- Estilo Padronizado dos Botões (Baseado no Simular Crédito) --- */
-    div.stButton > button {{
+    /* --- 1. BOTÕES PRINCIPAIS: BRANCO -> TRANSPARENTE NO HOVER --- */
+    div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
         color: #1a1a1a !important;
@@ -69,24 +69,44 @@ st.markdown(f"""
         border-radius: 12px !important;
         font-weight: 500 !important;
         padding: 10px 20px !important;
-        transition: all 0.3s ease !important;
+        transition: all 0.3s ease-in-out !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        text-decoration: none !important;
+        display: flex !important;
+        justify-content: center !important;
     }}
     
-    div.stButton > button:hover {{
-        background-color: #f8f8f8 !important;
+    div.stButton > button:hover, div.stDownloadButton > button:hover, .stLinkButton > a:hover {{
+        background-color: transparent !important;
+        background-image: none !important;
+        color: #1a1a1a !important;
         border-color: #bfa573 !important;
         transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
     }}
 
-    /* --- Exceções: Botões dentro das Caixas de Serviço (Pretos) --- */
+    /* --- 2. BOTÕES DENTRO DAS CAIXAS DE SERVIÇO (Dourado sobre Cinza Neutro) --- */
     .service-box .action-link {{
-        display: inline-block; padding: 10px 20px; background: #1a1a1a; color: white !important;
-        text-decoration: none !important; border-radius: 4px; font-size: 12px; font-weight: bold;
-        margin-top: 10px; text-transform: uppercase; text-align: center; width: 100%;
+        display: inline-block; 
+        padding: 8px 16px; 
+        background-color: #eeeeee !important; /* Cinza Neutro */
+        color: #bfa573 !important;           /* Texto Dourado */
+        border: 1px solid #d0d0d0;
+        text-decoration: none !important; 
+        border-radius: 8px; 
+        font-size: 11px; 
+        font-weight: bold;
+        margin-top: 10px; 
+        text-transform: uppercase; 
+        text-align: center;
+        transition: 0.3s;
     }}
 
+    .service-box .action-link:hover {{
+        background-color: transparent !important;
+        border-color: #bfa573 !important;
+    }}
+
+    /* Restantes estilos de proteção de layout */
     .main-protection-card {{
         background-color: rgba(253, 250, 245, 0.99);
         padding: 25px 35px 10px 35px;
@@ -134,7 +154,6 @@ st.markdown(f"""
     .cargo-text {{ color: #1a1a1a !important; font-weight: 700 !important; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; }}
     .quote-style {{ font-style: italic; color: #bfa573; font-size: 15px; margin: 10px 0; border-left: 2px solid #bfa573; padding-left: 10px; }}
     .bio-text {{ font-size: 14px; color: #333; line-height: 1.5; }}
-    
     .legal-footer-box {{
         font-size: 11px; color: #444; text-align: center; padding: 25px;
         background: rgba(253, 250, 245, 0.99); border-radius: 10px;
