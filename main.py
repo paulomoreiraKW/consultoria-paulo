@@ -229,6 +229,7 @@ elif st.session_state.page == "DETALHE":
         exit_base = safe_float(row.get("Preco_Exit", 0))
         invest_total = safe_float(row.get("Investimento_Total", 0))
 
+        # Cabeçalho do Imóvel
         st.markdown(f"""
             <div class="white-solid-box" style="margin-top:15px; border-bottom: 2px solid #1a1a1a;">
                 <h2 style="color:#1a1a1a; margin:0; font-weight:300; font-size:22px;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
@@ -239,9 +240,8 @@ elif st.session_state.page == "DETALHE":
             </div>
         """, unsafe_allow_html=True)
 
-st.markdown("""
+        st.markdown("""
             <style>
-                /* Alinhamento do Título e Labels */
                 .titulo-simulador {
                     text-align: center;
                     font-size: 16px;
@@ -249,8 +249,8 @@ st.markdown("""
                     font-weight: bold;
                     letter-spacing: 1px;
                     border-bottom: 1px solid #eee;
-                    padding-bottom: 5px; /* Reduzido */
-                    margin-bottom: 10px; /* Reduzido */
+                    padding-bottom: 5px;
+                    margin-bottom: 10px;
                     text-transform: uppercase;
                 }
                 div[data-testid="stColumn"]:nth-of-type(2) label {
@@ -277,6 +277,7 @@ st.markdown("""
         lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
         
         st.markdown(f"""
+            <div style="max-width: 600px; margin: 0 auto;">
                 <div style="text-align:center; margin-top:20px; padding:15px; border-top:1px solid #eee;">
                     <span style="color:#666; font-size:13px;">Projeção de Lucro Flip</span><br>
                     <span style="color:#bfa573; font-size:32px; font-weight:bold;">{lucro_estimado:,.2f}€</span>
@@ -288,7 +289,6 @@ st.markdown("""
 
         st.write("<br>", unsafe_allow_html=True)
         
-        # Input de identificação também centralizado para harmonia visual
         st.markdown('<div style="max-width: 600px; margin: 0 auto;">', unsafe_allow_html=True)
         lead_contacto = st.text_input("Para mais detalhes, preencha com:", placeholder="Seu Nome ou Email...")
 
