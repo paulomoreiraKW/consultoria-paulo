@@ -239,12 +239,30 @@ elif st.session_state.page == "DETALHE":
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown('''
-            <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #bfa573; 
+        st.markdown("""
+            <style>
+                /* Alinhamento do Título e Labels */
+                .titulo-simulador {
+                    text-align: center;
+                    font-size: 16px;
+                    color: #1a1a1a;
+                    font-weight: bold;
+                    letter-spacing: 1px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 10px;
+                    margin-bottom: 20px;
+                    text-transform: uppercase;
+                }
+                div[data-testid="stColumn"]:nth-of-type(2) label {
+                    justify-content: flex-end;
+                    text-align: right;
+                    width: 100%;
+                }
+            </style>
+            <div style="background-color: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #bfa573; 
                         margin: 10px auto; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <p style="margin:0 0 15px 0; font-size:16px; color:#1a1a1a; text-transform:uppercase; font-weight:bold; 
-                          letter-spacing:1px; border-bottom: 1px solid #eee; padding-bottom:10px;">🛠️ Simulador de Investimento</p>
-        ''', unsafe_allow_html=True)
+                <p class="titulo-simulador">🛠️ Simulador de Investimento</p>
+        """, unsafe_allow_html=True)
         
         col_sim1, col_sim2 = st.columns(2)
         with col_sim1:
@@ -252,6 +270,8 @@ elif st.session_state.page == "DETALHE":
         with col_sim2:
             valor_sugerido = exit_base if exit_base > 0 else preco_lista * 1.3
             novo_exit = st.number_input("**Preço de Venda Alvo (€)**", value=valor_sugerido, step=1000.0, format="%.2f")
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
         foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
         lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
