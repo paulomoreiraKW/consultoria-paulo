@@ -253,7 +253,7 @@ elif st.session_state.page == "DETALHE":
                 </div>
             </div>
         """, unsafe_allow_html=True)
-        url_whatsapp = f"https://wa.me/351912555122?text=Olá%20Paulo,%20gostaria%20de%20receber%20o%20Relatório%20Financeiro%20do%20imóvel%20Ref:%20{ref}"
+        url_whatsapp = f"https://wa.me/351911995695?text=Olá%20Paulo,%20gostaria%20de%20receber%20o%20Relatório%20Financeiro%20do%20imóvel%20Ref:%20{ref}"
         
         if st.button("🔓 Desbloquear Dados", key="btn_desbloquear"):
             js = f"window.open('{url_whatsapp}')"
