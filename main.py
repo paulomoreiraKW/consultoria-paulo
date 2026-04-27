@@ -5,6 +5,7 @@ import pandas as pd
 import time
 import requests
 import re
+import hashlib
 
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
@@ -40,11 +41,21 @@ def safe_float(value):
         return 0.0
 
 def enviar_para_sheet(payload):
-    SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec" 
+    SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec"
+    
+    assinatura_dados = hashlib.md5(str(payload).encode()).hexdigest()
+    
+    if "ultima_assinatura" in st.session_state:
+        if st.session_state.ultima_assinatura == assinatura_dados:
+            return False            
     try:
-        requests.post(SCRIPT_URL, json=payload, timeout=10)
+        res = requests.post(SCRIPT_URL, json=payload, timeout=10)
+        if res.status_code == 200:
+            st.session_state.ultima_assinatura = assinatura_dados
+            return True
     except:
-        pass
+        return False
+    return False
 
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
