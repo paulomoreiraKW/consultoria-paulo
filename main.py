@@ -302,19 +302,25 @@ elif st.session_state.page == "DETALHE":
                 e_email = re.match(r"[^@]+@[^@]+\.[^@]+", lead_contacto)
                 e_telefone = len(re.sub(r"\D", "", lead_contacto)) >= 9
 
-                if e_email or e_telefone:
+ if e_email or e_telefone:
+                    roi_simulado = (lucro_estimado / invest_total * 100) if invest_total > 0 else 0
+                    descritivo_adn = f"Simulação: ROI de {roi_simulado:.2f}%."
+                    if foi_simulado:
+                        descritivo_adn += " (Valores ajustados pelo utilizador)"
                     dados_relatorio = {
                         "relatorio_ref": ref,
                         "relatorio_lead": lead_contacto,
                         "relatorio_score": str(row.get("Score_PM5D", "3")),
                         "relatorio_zona": row.get("Localidade", "N/A"),
-                        "relatorio_lucro": f"{lucro_estimado:,.2f}€",
-                        "relatorio_capex": f"{novo_capex:,.2f}€",
-                        "relatorio_exit": f"{novo_exit:,.2f}€",
-                        "relatorio_invest": f"{invest_total:,.2f}€",
+                        "relatorio_lucro": format_pt(lucro_estimado) + "€",
+                        "relatorio_capex": format_pt(novo_capex) + "€",
+                        "relatorio_exit": format_pt(novo_exit) + "€",
+                        "relatorio_invest": format_pt(invest_total) + "€",
+                        "relatorio_adn": descritivo_adn,
                         "simulou": foi_simulado
                     }
                     enviar_para_sheet(dados_relatorio)
+                    
                     st.success("Dados validados. A abrir ligação prioritária...")
                     msg_wa = f"Olá Paulo, Verifiquei os resultados {ref}. Nome: {lead_contacto}. Projeção: {lucro_estimado:,.2f}€."
                     url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
