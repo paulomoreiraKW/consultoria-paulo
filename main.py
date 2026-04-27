@@ -273,23 +273,21 @@ elif st.session_state.page == "DETALHE":
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
+foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
         lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
         
         st.markdown(f"""
             <div style="max-width: 600px; margin: 0 auto;">
-                <div style="text-align:center; margin-top:20px; padding:15px; border-top:1px solid #eee;">
+                <div style="text-align:center; margin-top:5px; padding:10px; border-top:1px solid #eee;">
                     <span style="color:#666; font-size:13px;">Projeção de Lucro Flip</span><br>
                     <span style="color:#bfa573; font-size:32px; font-weight:bold;">{lucro_estimado:,.2f}€</span>
-                    <div style="width:40px; height:2px; background:#1a1a1a; margin:10px auto;"></div>
+                    <div style="width:40px; height:2px; background:#1a1a1a; margin:5px auto;"></div>
                     <p style="color:#888; font-size:10px; margin:0;">*Cálculo baseado na Metodologia 5D P.M.M.</p>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
-        st.write("<br>", unsafe_allow_html=True)
-        
-        st.markdown('<div style="max-width: 600px; margin: 0 auto;">', unsafe_allow_html=True)
+        st.markdown('<div style="max-width: 600px; margin: -10px auto 0 auto;">', unsafe_allow_html=True)
         lead_contacto = st.text_input("Para mais detalhes, preencha com:", placeholder="Seu Nome ou Email...")
 
         if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
