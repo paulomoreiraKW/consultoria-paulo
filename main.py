@@ -272,17 +272,24 @@ elif st.session_state.page == "DETALHE":
                             border-radius: 12px; 
                             border: 1px solid rgba(255, 255, 255, 0.2); 
                             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255,255,255,0.1); 
-                            width: 100%; position: relative; overflow: hidden;">
+                            width: 100%;
+                            position: relative;
+                            overflow: hidden;">
+                    
                     <span style="color:#1a1a1a; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: bold;">
                         Projeção de Lucro Flip
                     </span><br>
+                    
                     <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0px 0px 5px rgba(255,255,255,0.8);">
                         {lucro_estimado:,.2f}€
                     </span>
-                    <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.2); margin:15px auto;"></div>
-                    <p style="color:#333; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; opacity: 0.7;">
+                    
+                    <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.3); margin:15px auto;"></div>
+                    
+                    <p style="color:#111; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; opacity: 0.8;">
                         Cálculo baseado na Metodologia 5D P.M.M.
                     </p>
+                    
                 </div>
             </div>
         """, unsafe_allow_html=True)
