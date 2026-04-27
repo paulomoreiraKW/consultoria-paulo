@@ -213,11 +213,9 @@ elif st.session_state.page == "DETALHE":
             </div>
             <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center;">
                 <h4 style="margin:0; color:#1a1a1a;">📊 Relatório Financeiro</h4>
-                
                 <p style="font-size:13px; color:#666; font-weight:700; margin:10px 0;">
                     ROI Estimado, Plano de CAPEX e Projeção de Lucro Flip.
                 </p>
-                
                 <div style="font-size:18px; color:#a6894a; font-weight:600; letter-spacing:1px;">
                     Exclusivo para Investidores
                 </div>
@@ -246,7 +244,7 @@ else:
             <div class="cargo-text">Consultor Imobiliário</div>
             <h1 style="color:#1a1a1a; font-size:32px; font-weight:300; margin:5px 0;">Paulo Moreira</h1>
             <div class="quote-style">"O sucesso de uma transação imobiliária depende de estratégia, não de sorte."</div>
-            <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
+            <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excellence.</div>
         </div>""", unsafe_allow_html=True)
 
         if not df.empty:
