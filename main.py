@@ -239,35 +239,17 @@ elif st.session_state.page == "DETALHE":
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown(f"""
-            <div style="max-width: 600px; margin: 10px auto; display: flex; justify-content: center;">
-                <div style="text-align:center; padding: 25px; 
-                            background-color: rgba(255, 255, 255, 0.4); /* Fundo branco semi-transparente */
-                            -webkit-backdrop-filter: blur(10px); /* Efeito de desfoque para Safari */
-                            backdrop-filter: blur(10px); /* Efeito de desfoque para outros browsers */
-                            border-radius: 12px; 
-                            border: 1px solid rgba(255, 255, 255, 0.2); /* Borda muito fina e clara */
-                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255,255,255,0.1); /* Sombra suave */
-                            width: 100%;
-                            position: relative;
-                            overflow: hidden;">
-                                  
-                    <span style="color:#1a1a1a; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: bold;">
-                        Projeção de Lucro Flip
-                    </span><br>
-                    
-                    <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0px 0px 5px rgba(255,255,255,0.8);">
-                        {lucro_estimado:,.2f}€
-                    </span>
-                    
-                    <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.2); margin:15px auto;"></div>
-                    
-                    <p style="color:#333; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; opacity: 0.7;">
-                        Cálculo baseado na Metodologia 5D P.M.M.
-                    </p>
-                    
-                </div>
-            </div>
+        st.markdown("""
+            <style>
+                .titulo-simulador {
+                    text-align: center; font-size: 16px; color: #1a1a1a; font-weight: bold;
+                    letter-spacing: 1px; border-bottom: 1px solid #eee; padding-bottom: 5px;
+                    margin-bottom: 10px; text-transform: uppercase;
+                }
+            </style>
+            <div style="background-color: #ffffff; padding: 10px 25px; border-radius: 12px; border: 1px solid #bfa573; 
+                        margin: 5px auto; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <p class="titulo-simulador">🛠️ Simulador de Investimento</p>
         """, unsafe_allow_html=True)
         
         col_sim1, col_sim2 = st.columns(2)
@@ -284,24 +266,23 @@ elif st.session_state.page == "DETALHE":
         st.markdown(f"""
             <div style="max-width: 600px; margin: 10px auto; display: flex; justify-content: center;">
                 <div style="text-align:center; padding: 25px; 
-                            background: linear-gradient(135deg, #101520 0%, #1a1f2c 100%); 
-                            border-radius: 12px; border: 1px solid #333845;
-                            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 5px 15px rgba(0,0,0,0.3);
+                            background-color: rgba(255, 255, 255, 0.4); 
+                            -webkit-backdrop-filter: blur(10px); 
+                            backdrop-filter: blur(10px); 
+                            border-radius: 12px; 
+                            border: 1px solid rgba(255, 255, 255, 0.2); 
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255,255,255,0.1); 
                             width: 100%; position: relative; overflow: hidden;">
-                    <span style="color:#a0b0a0; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8;">
+                    <span style="color:#1a1a1a; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: bold;">
                         Projeção de Lucro Flip
                     </span><br>
-                    <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0 0 10px rgba(191,165,115,0.4);">
+                    <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0px 0px 5px rgba(255,255,255,0.8);">
                         {lucro_estimado:,.2f}€
                     </span>
-                    <div style="width:40px; height:1px; background: rgba(160,176,160, 0.3); margin:15px auto;"></div>
-                    <p style="color:#a0b0a0; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; opacity: 0.7;">
+                    <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.2); margin:15px auto;"></div>
+                    <p style="color:#333; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; opacity: 0.7;">
                         Cálculo baseado na Metodologia 5D P.M.M.
                     </p>
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-                                background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 50%);
-                                pointer-events: none;">
-                    </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -328,13 +309,11 @@ elif st.session_state.page == "DETALHE":
                 st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
             else:
                 st.error("A identificação é necessária para aceder ao dossier técnico.")
-
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
     col_l, col_r = st.columns([1, 1.8])
-    
     with col_l:
         if os.path.exists("paulo_moreira.png"):
             img_b64 = get_base64("paulo_moreira.png")
