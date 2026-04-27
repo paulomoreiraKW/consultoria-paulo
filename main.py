@@ -239,20 +239,35 @@ elif st.session_state.page == "DETALHE":
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("""
-            <style>
-                .titulo-simulador {
-                    text-align: center; font-size: 16px; color: #1a1a1a; font-weight: bold;
-                    letter-spacing: 1px; border-bottom: 1px solid #eee;
-                    padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;
-                }
-                div[data-testid="stColumn"]:nth-of-type(2) label {
-                    justify-content: flex-end; text-align: right; width: 100%;
-                }
-            </style>
-            <div style="background-color: #ffffff; padding: 10px 25px; border-radius: 12px; border: 1px solid #bfa573; 
-                        margin: 5px auto; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <p class="titulo-simulador">🛠️ Simulador de Investimento</p>
+        st.markdown(f"""
+            <div style="max-width: 600px; margin: 10px auto; display: flex; justify-content: center;">
+                <div style="text-align:center; padding: 25px; 
+                            background-color: rgba(255, 255, 255, 0.4); /* Fundo branco semi-transparente */
+                            -webkit-backdrop-filter: blur(10px); /* Efeito de desfoque para Safari */
+                            backdrop-filter: blur(10px); /* Efeito de desfoque para outros browsers */
+                            border-radius: 12px; 
+                            border: 1px solid rgba(255, 255, 255, 0.2); /* Borda muito fina e clara */
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255,255,255,0.1); /* Sombra suave */
+                            width: 100%;
+                            position: relative;
+                            overflow: hidden;">
+                                  
+                    <span style="color:#1a1a1a; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: bold;">
+                        Projeção de Lucro Flip
+                    </span><br>
+                    
+                    <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0px 0px 5px rgba(255,255,255,0.8);">
+                        {lucro_estimado:,.2f}€
+                    </span>
+                    
+                    <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.2); margin:15px auto;"></div>
+                    
+                    <p style="color:#333; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; opacity: 0.7;">
+                        Cálculo baseado na Metodologia 5D P.M.M.
+                    </p>
+                    
+                </div>
+            </div>
         """, unsafe_allow_html=True)
         
         col_sim1, col_sim2 = st.columns(2)
