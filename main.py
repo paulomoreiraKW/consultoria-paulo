@@ -343,8 +343,6 @@ if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
                    st.error("Por favor, insira um e-mail ou contacto telefónico válido.")
             else:
                 st.error("A identificação é necessária para aceder ao dossier técnico.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
 else:
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
     col_l, col_r = st.columns([1, 1.8])
