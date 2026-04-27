@@ -35,18 +35,18 @@ def safe_float(value):
             val_str = val_str.replace(".", "").replace(",", ".")
         elif "," in val_str:
             val_str = val_str.replace(",", ".")
-            
         return float(val_str)
     except:
         return 0.0
 
+def format_pt(n):
+    return f"{n:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
 def enviar_para_sheet(payload):
     SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec"
-    
     assinatura_dados = hashlib.md5(str(payload).encode()).hexdigest()
-    
     if "ultima_assinatura" in st.session_state:
-        if st.session_state.ultima_assinatura == assinatura_dados:
+        if st.session_state.ultima_assinatura == signature_dados:
             return False            
     try:
         res = requests.post(SCRIPT_URL, json=payload, timeout=10)
@@ -187,7 +187,6 @@ def render_carousel_fragment(df_data):
             st.session_state.idx = (st.session_state.idx + 1) % len(df_data)
             st.session_state.last_update = time.time()
             st.rerun()
-        
         row = df_data.iloc[st.session_state.idx]
         st.markdown(f"""
         <div class="preview-window">
@@ -211,7 +210,6 @@ if st.session_state.page == "LOJA":
     if st.button("← Voltar ao Perfil"):
         st.session_state.page = "HOME"
         st.rerun()
-    
     if df.empty:
         st.warning("A carregar ativos...")
     else:
@@ -236,11 +234,9 @@ if st.session_state.page == "LOJA":
 elif st.session_state.page == "DETALHE":
     row = st.session_state.selected_imovel
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
-    
     if st.button("← Voltar à Galeria"):
         st.session_state.page = "LOJA"
         st.rerun()
-    
     if row:
         ref = row.get("Referencia", "N/A")
         preco_lista = safe_float(row.get("Preco_Listagem", 0))
@@ -313,11 +309,12 @@ elif st.session_state.page == "DETALHE":
                 e_email = re.match(r"[^@]+@[^@]+\.[^@]+", lead_contacto)
                 e_telefone = len(re.sub(r"\D", "", lead_contacto)) >= 9
 
- if e_email or e_telefone:
+                if e_email or e_telefone:
                     roi_simulado = (lucro_estimado / invest_total * 100) if invest_total > 0 else 0
                     descritivo_adn = f"Simulação: ROI de {roi_simulado:.2f}%."
                     if foi_simulado:
                         descritivo_adn += " (Valores ajustados pelo utilizador)"
+                    
                     dados_relatorio = {
                         "relatorio_ref": ref,
                         "relatorio_lead": lead_contacto,
