@@ -273,7 +273,7 @@ elif st.session_state.page == "DETALHE":
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
+        foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
         lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
         
         st.markdown(f"""
@@ -311,8 +311,6 @@ foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
             else:
                 st.error("A identificação é necessária para aceder ao dossier técnico.")
         st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
 else:
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
