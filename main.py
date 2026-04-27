@@ -340,7 +340,7 @@ if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
                         url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
                         st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
                 else:
-                    st.error("Por favor, insira um e-mail ou contacto telefónico válido.")
+                   st.error("Por favor, insira um e-mail ou contacto telefónico válido.")
             else:
                 st.error("A identificação é necessária para aceder ao dossier técnico.")
     st.markdown('</div>', unsafe_allow_html=True)
