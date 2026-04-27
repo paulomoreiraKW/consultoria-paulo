@@ -1,3 +1,6 @@
+Aqui tens o código completo e corrigido, com o texto da metodologia mais escuro, em negrito e a linha divisória com maior visibilidade, mantendo toda a estrutura anterior intacta:
+
+```python
 import streamlit as st
 import base64
 import os
@@ -272,24 +275,17 @@ elif st.session_state.page == "DETALHE":
                             border-radius: 12px; 
                             border: 1px solid rgba(255, 255, 255, 0.2); 
                             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255,255,255,0.1); 
-                            width: 100%;
-                            position: relative;
-                            overflow: hidden;">
-                    
+                            width: 100%; position: relative; overflow: hidden;">
                     <span style="color:#1a1a1a; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: bold;">
                         Projeção de Lucro Flip
                     </span><br>
-                    
                     <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0px 0px 5px rgba(255,255,255,0.8);">
                         {lucro_estimado:,.2f}€
                     </span>
-                    
-                    <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.3); margin:15px auto;"></div>
-                    
-                    <p style="color:#111; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; opacity: 0.8;">
+                    <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.4); margin:15px auto;"></div>
+                    <p style="color:#000; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; font-weight: bold; opacity: 0.9;">
                         Cálculo baseado na Metodologia 5D P.M.M.
                     </p>
-                    
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -393,3 +389,4 @@ st.markdown("""<div class="legal-footer-box">
     Tel.: 256 313 054 | kwareafeira@kwportugal.pt | www.kwportugal.pt | <br>
     <b>Cada Market Center é de gestão independente</b>
 </div>""", unsafe_allow_html=True)
+```
