@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import time
 import requests
+import re
 
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
@@ -291,22 +292,28 @@ elif st.session_state.page == "DETALHE":
 
         if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
             if lead_contacto:
-                dados_relatorio = {
-                    "relatorio_ref": ref,
-                    "relatorio_lead": lead_contacto,
-                    "relatorio_score": str(row.get("Score_PM5D", "3")),
-                    "relatorio_zona": row.get("Localidade", "N/A"),
-                    "relatorio_lucro": f"{lucro_estimado:,.2f}€",
-                    "relatorio_capex": f"{novo_capex:,.2f}€",
-                    "relatorio_exit": f"{novo_exit:,.2f}€",
-                    "relatorio_invest": f"{invest_total:,.2f}€",
-                    "simulou": foi_simulado
-                }
-                enviar_para_sheet(dados_relatorio)
-                st.success("Dados validados. A abrir ligação prioritária...")
-                msg_wa = f"Olá Paulo, Verifiquei os resultados {ref}. Nome: {lead_contacto}. Projeção: {lucro_estimado:,.2f}€."
-                url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
-                st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
+                e_email = re.match(r"[^@]+@[^@]+\.[^@]+", lead_contacto)
+                e_telefone = len(re.sub(r"\D", "", lead_contacto)) >= 9
+
+                if e_email or e_telefone:
+                    dados_relatorio = {
+                        "relatorio_ref": ref,
+                        "relatorio_lead": lead_contacto,
+                        "relatorio_score": str(row.get("Score_PM5D", "3")),
+                        "relatorio_zona": row.get("Localidade", "N/A"),
+                        "relatorio_lucro": f"{lucro_estimado:,.2f}€",
+                        "relatorio_capex": f"{novo_capex:,.2f}€",
+                        "relatorio_exit": f"{novo_exit:,.2f}€",
+                        "relatorio_invest": f"{invest_total:,.2f}€",
+                        "simulou": foi_simulado
+                    }
+                    enviar_para_sheet(dados_relatorio)
+                    st.success("Dados validados. A abrir ligação prioritária...")
+                    msg_wa = f"Olá Paulo, Verifiquei os resultados {ref}. Nome: {lead_contacto}. Projeção: {lucro_estimado:,.2f}€."
+                    url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
+                    st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
+                else:
+                    st.error("Por favor, insira um e-mail ou contacto telefónico válido.")
             else:
                 st.error("A identificação é necessária para aceder ao dossier técnico.")
     st.markdown('</div>', unsafe_allow_html=True)
