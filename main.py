@@ -229,7 +229,6 @@ elif st.session_state.page == "DETALHE":
         exit_base = safe_float(row.get("Preco_Exit", 0))
         invest_total = safe_float(row.get("Investimento_Total", 0))
 
-        # Cabeçalho do Imóvel
         st.markdown(f"""
             <div class="white-solid-box" style="margin-top:15px; border-bottom: 2px solid #1a1a1a;">
                 <h2 style="color:#1a1a1a; margin:0; font-weight:300; font-size:22px;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
@@ -243,20 +242,12 @@ elif st.session_state.page == "DETALHE":
         st.markdown("""
             <style>
                 .titulo-simulador {
-                    text-align: center;
-                    font-size: 16px;
-                    color: #1a1a1a;
-                    font-weight: bold;
-                    letter-spacing: 1px;
-                    border-bottom: 1px solid #eee;
-                    padding-bottom: 5px;
-                    margin-bottom: 10px;
-                    text-transform: uppercase;
+                    text-align: center; font-size: 16px; color: #1a1a1a; font-weight: bold;
+                    letter-spacing: 1px; border-bottom: 1px solid #eee;
+                    padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;
                 }
                 div[data-testid="stColumn"]:nth-of-type(2) label {
-                    justify-content: flex-end;
-                    text-align: right;
-                    width: 100%;
+                    justify-content: flex-end; text-align: right; width: 100%;
                 }
             </style>
             <div style="background-color: #ffffff; padding: 10px 25px; border-radius: 12px; border: 1px solid #bfa573; 
@@ -270,7 +261,6 @@ elif st.session_state.page == "DETALHE":
         with col_sim2:
             valor_sugerido = exit_base if exit_base > 0 else preco_lista * 1.3
             novo_exit = st.number_input("**Preço de Venda Alvo (€)**", value=valor_sugerido, step=1000.0, format="%.2f")
-
         st.markdown("</div>", unsafe_allow_html=True)
 
         foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
@@ -280,27 +270,19 @@ elif st.session_state.page == "DETALHE":
             <div style="max-width: 600px; margin: 10px auto; display: flex; justify-content: center;">
                 <div style="text-align:center; padding: 25px; 
                             background: linear-gradient(135deg, #101520 0%, #1a1f2c 100%); 
-                            border-radius: 12px; 
-                            border: 1px solid #333845;
+                            border-radius: 12px; border: 1px solid #333845;
                             box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 5px 15px rgba(0,0,0,0.3);
-                            width: 100%;
-                            position: relative;
-                            overflow: hidden;">
-                    
+                            width: 100%; position: relative; overflow: hidden;">
                     <span style="color:#a0b0a0; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8;">
                         Projeção de Lucro Flip
                     </span><br>
-                    
                     <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0 0 10px rgba(191,165,115,0.4);">
                         {lucro_estimado:,.2f}€
                     </span>
-                    
                     <div style="width:40px; height:1px; background: rgba(160,176,160, 0.3); margin:15px auto;"></div>
-                    
                     <p style="color:#a0b0a0; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; opacity: 0.7;">
                         Cálculo baseado na Metodologia 5D P.M.M.
                     </p>
-                    
                     <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
                                 background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 50%);
                                 pointer-events: none;">
@@ -309,7 +291,6 @@ elif st.session_state.page == "DETALHE":
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown('<div style="max-width: 600px; margin: -10px auto 0 auto;">', unsafe_allow_html=True)
         lead_contacto = st.text_input("Para mais detalhes, preencha com:", placeholder="Seu Nome ou Email...")
 
         if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
@@ -332,7 +313,8 @@ elif st.session_state.page == "DETALHE":
                 st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
             else:
                 st.error("A identificação é necessária para aceder ao dossier técnico.")
-        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 else:
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
