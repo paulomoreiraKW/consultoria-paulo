@@ -27,10 +27,17 @@ def get_base64(bin_file):
     return ""
 
 def safe_float(value):
+    if value is None or value == "": return 0.0
     try:
-        return float(str(value).replace("%","").replace(",",".").replace("€","").replace(" ","").replace("\xa0","").strip())
+        val_str = str(value).replace("€","").replace("%","").replace("\xa0","").replace(" ","").strip()
+        if "." in val_str and "," in val_str:
+            val_str = val_str.replace(".", "").replace(",", ".")
+        elif "," in val_str:
+            val_str = val_str.replace(",", ".")
+            
+        return float(val_str)
     except:
-        return 0
+        return 0.0
 
 def enviar_para_sheet(payload):
     SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec" 
