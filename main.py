@@ -200,8 +200,8 @@ elif st.session_state.page == "DETALHE":
                 <h2 style="color:#1a1a1a; margin:0; font-weight:300;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
                 <small style="color:#888;">Referência Técnica: {ref}</small>
             </div>
-            <div style="width:100%; height:280px; overflow:hidden; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <img src="{row.get('Capa_Manual','')}" style="width:100%; height:100%; object-fit:cover; display:block;">
+            <div style="width:100%; height:280px; background-color:#ffffff; overflow:hidden; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display:flex; align-items:center; justify-content:center;">
+                <img src="{row.get('Capa_Manual','')}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:8px;">
             </div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
                 <div class="white-solid-box" style="margin-bottom:0;">
@@ -211,24 +211,23 @@ elif st.session_state.page == "DETALHE":
                     <small style="color:#888;">ÁREA ÚTIL</small><br><b style="font-size:22px;">{area} m²</b>
                 </div>
             </div>
-            <div class="white-solid-box" style="background-color: #f9f9f9; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                <h3 style="color:#000000; margin-bottom:12px; font-weight:700;">Relatório Financeiro</h3>
-                <p style="color:#000000; font-weight:800; text-shadow: 1px 1px 1px rgba(255,255,255,1), 0px 0px 3px rgba(0,0,0,0.2); margin-bottom:10px; font-size:16px;">
-                    ROI estimado entre 15% a 22% em regime de Buy-to-Flip
+            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center;">
+                <h4 style="margin:0; color:#1a1a1a;">📊 Relatório Financeiro</h4>
+                
+                <p style="font-size:13px; color:#666; font-weight:700; margin:10px 0;">
+                    ROI Estimado, Plano de CAPEX e Projeção de Lucro Flip.
                 </p>
-                <div style="color:#a6894a; font-weight:700; font-size:15px; text-shadow: 0.5px 0.5px 0px rgba(0,0,0,0.1);">
+                
+                <div style="font-size:18px; color:#a6894a; font-weight:600; letter-spacing:1px;">
                     Exclusivo para Investidores
                 </div>
             </div>
         """, unsafe_allow_html=True)
         url_whatsapp = f"https://wa.me/351912555122?text=Olá%20Paulo,%20gostaria%20de%20receber%20o%20Relatório%20Financeiro%20do%20imóvel%20Ref:%20{ref}"
-        st.markdown(f"""
-            <a href="{url_whatsapp}" target="_blank" style="text-decoration: none;">
-                <div style="background-color:#1a1a1a; color:white; text-align:center; padding:18px; border-radius:10px; font-weight:bold; margin-top:15px; font-size:17px; letter-spacing:1px;">
-                    🔓 Desbloquear Dados
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
+        
+        if st.button("🔓 Desbloquear Dados", key="btn_desbloquear"):
+            js = f"window.open('{url_whatsapp}')"
+            st.components.v1.html(f"<script>{js}</script>", height=0)
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
