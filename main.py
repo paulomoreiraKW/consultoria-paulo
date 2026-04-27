@@ -3,6 +3,7 @@ import base64
 import os
 import pandas as pd
 import time
+import requests
 
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
@@ -30,6 +31,13 @@ def safe_float(value):
     except:
         return 0
 
+def enviar_para_sheet(payload):
+    SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec" 
+    try:
+        requests.post(SCRIPT_URL, json=payload, timeout=10)
+    except:
+        pass
+
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
@@ -45,7 +53,7 @@ def load_data(url):
         if "Decisao" in data.columns:
             data = data[data["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])]
         return data.reset_index(drop=True)
-    except Exception:
+    except:
         return pd.DataFrame()
 
 df = load_data(URL)
@@ -59,8 +67,6 @@ st.markdown(f"""
         background-size: cover;
         background-attachment: fixed;
     }}
-    
-    /* --- 1. BOTÕES PRINCIPAIS: BRANCO -> TRANSPARENTE NO HOVER --- */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
@@ -75,21 +81,17 @@ st.markdown(f"""
         display: flex !important;
         justify-content: center !important;
     }}
-    
     div.stButton > button:hover, div.stDownloadButton > button:hover, .stLinkButton > a:hover {{
         background-color: transparent !important;
-        background-image: none !important;
         color: #1a1a1a !important;
         border-color: #bfa573 !important;
         transform: translateY(-1px) !important;
     }}
-
-    /* --- 2. BOTÕES DENTRO DAS CAIXAS DE SERVIÇO (Dourado sobre Cinza Neutro) --- */
     .service-box .action-link {{
         display: inline-block; 
         padding: 8px 16px; 
-        background-color: #eeeeee !important; /* Cinza Neutro */
-        color: #bfa573 !important;           /* Texto Dourado */
+        background-color: #eeeeee !important;
+        color: #bfa573 !important; 
         border: 1px solid #d0d0d0;
         text-decoration: none !important; 
         border-radius: 8px; 
@@ -100,13 +102,10 @@ st.markdown(f"""
         text-align: center;
         transition: 0.3s;
     }}
-
     .service-box .action-link:hover {{
         background-color: transparent !important;
         border-color: #bfa573 !important;
     }}
-
-    /* Restantes estilos de proteção de layout */
     .main-protection-card {{
         background-color: rgba(253, 250, 245, 0.99);
         padding: 25px 35px 10px 35px;
@@ -223,41 +222,66 @@ elif st.session_state.page == "DETALHE":
         st.rerun()
     
     if row:
-        preco = safe_float(row.get("Preco_Listagem", 0))
-        area = safe_float(row.get("Area_m2", 0))
         ref = row.get("Referencia", "N/A")
-        
+        preco_lista = safe_float(row.get("Preco_Listagem", 0))
+        capex_base = safe_float(row.get("CAPEX_Estimado", 0))
+        exit_base = safe_float(row.get("Preco_Exit", 0))
+        invest_total = safe_float(row.get("Investimento_Total", 0))
+
         st.markdown(f"""
             <div class="white-solid-box" style="margin-top:15px;">
                 <h2 style="color:#1a1a1a; margin:0; font-weight:300;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
                 <small style="color:#888;">Referência Técnica: {ref}</small>
             </div>
-            <div style="width:100%; height:280px; background-color:#ffffff; overflow:hidden; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display:flex; align-items:center; justify-content:center;">
+            <div style="width:100%; height:280px; background-color:#ffffff; overflow:hidden; border-radius:12px; margin-bottom:20px; display:flex; align-items:center; justify-content:center;">
                 <img src="{row.get('Capa_Manual','')}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:8px;">
             </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
-                <div class="white-solid-box" style="margin-bottom:0;">
-                    <small style="color:#888;">PREÇO</small><br><b style="font-size:22px;">{preco:,.0f}€</b>
-                </div>
-                <div class="white-solid-box" style="margin-bottom:0;">
-                    <small style="color:#888;">ÁREA ÚTIL</small><br><b style="font-size:22px;">{area} m²</b>
-                </div>
-            </div>
-            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center;">
-                <h4 style="margin:0; color:#1a1a1a;">📊 Relatório Financeiro</h4>
+        """, unsafe_allow_html=True)
+
+        st.markdown("### 🛠️ Simulação de Investimento")
+        col_sim1, col_sim2 = st.columns(2)
+        with col_sim1:
+            novo_capex = st.number_input("Estimativa de Obra (€)", value=capex_base, step=1000.0)
+        with col_sim2:
+            valor_sugerido = exit_base if exit_base > 0 else preco_lista * 1.3
+            novo_exit = st.number_input("Preço de Venda Alvo (€)", value=valor_sugerido, step=1000.0)
+
+        foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
+        lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
+        
+        st.markdown(f"""
+            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center; margin-top:20px;">
+                <h4 style="margin:0; color:#1a1a1a;">📊 Relatório Financeiro Preliminar</h4>
                 <p style="font-size:13px; color:#666; font-weight:700; margin:10px 0;">
-                    ROI Estimado, Plano de CAPEX e Projeção de Lucro Flip.
+                    Projeção de Lucro Flip: <span style="color:#bfa573; font-size:18px;">{lucro_estimado:,.2f}€</span>
                 </p>
-                <div style="font-size:18px; color:#a6894a; font-weight:600; letter-spacing:1px;">
-                    Exclusivo para Investidores
-                </div>
             </div>
         """, unsafe_allow_html=True)
-        url_whatsapp = f"https://wa.me/351911995695?text=Olá%20Paulo,%20gostaria%20de%20receber%20o%20Relatório%20Financeiro%20do%20imóvel%20Ref:%20{ref}"
-        
-        if st.button("🔓 Desbloquear Dados", key="btn_desbloquear"):
-            js = f"window.open('{url_whatsapp}')"
-            st.components.v1.html(f"<script>{js}</script>", height=0)
+
+        lead_contacto = st.text_input("O seu Nome ou Email", placeholder="ex: Sr. Silva / joao@email.com")
+
+        if st.button("🔓 Desbloquear e Enviar Relatório", key="btn_desbloquear"):
+            if lead_contacto:
+                dados_relatorio = {
+                    "relatorio_ref": ref,
+                    "relatorio_lead": lead_contacto,
+                    "relatorio_score": str(row.get("Score_PM5D", "3")),
+                    "relatorio_zona": row.get("Localidade", "N/A"),
+                    "relatorio_lucro": f"{lucro_estimado:,.2f}€",
+                    "relatorio_capex": f"{novo_capex:,.2f}€",
+                    "relatorio_exit": f"{novo_exit:,.2f}€",
+                    "relatorio_invest": f"{invest_total:,.2f}€",
+                    "relatorio_adn": "", 
+                    "simulou": foi_simulado
+                }
+                enviar_para_sheet(dados_relatorio)
+                st.success("Relatório preparado. A abrir contacto...")
+                msg_wa = f"Olá Paulo, solicitei o relatório do Ativo {ref}. Nome: {lead_contacto}. Lucro Simulado: {lucro_estimado:,.2f}€."
+                url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
+                st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
+            else:
+                st.error("Por favor, identifique-se.")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
