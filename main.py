@@ -217,6 +217,7 @@ if st.session_state.page == "LOJA":
 elif st.session_state.page == "DETALHE":
     row = st.session_state.selected_imovel
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
+    
     if st.button("← Voltar à Galeria"):
         st.session_state.page = "LOJA"
         st.rerun()
@@ -228,39 +229,43 @@ elif st.session_state.page == "DETALHE":
         exit_base = safe_float(row.get("Preco_Exit", 0))
         invest_total = safe_float(row.get("Investimento_Total", 0))
 
+        # Cabeçalho do Ativo
         st.markdown(f"""
-            <div class="white-solid-box" style="margin-top:15px;">
-                <h2 style="color:#1a1a1a; margin:0; font-weight:300;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
-                <small style="color:#888;">Referência Técnica: {ref}</small>
+            <div class="white-solid-box" style="margin-top:15px; border-bottom: 2px solid #1a1a1a;">
+                <h2 style="color:#1a1a1a; margin:0; font-weight:300; font-size:22px;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
+                <small style="color:#bfa573; font-weight:bold; letter-spacing:1px;">REFERÊNCIA: {ref}</small>
             </div>
-            <div style="width:100%; height:280px; background-color:#ffffff; overflow:hidden; border-radius:12px; margin-bottom:20px; display:flex; align-items:center; justify-content:center;">
-                <img src="{row.get('Capa_Manual','')}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:8px;">
+            <div style="width:100%; height:300px; background-color:#ffffff; overflow:hidden; border-radius:12px; margin-bottom:10px; display:flex; align-items:center; justify-content:center; box-shadow: inset 0 0 10px rgba(0,0,0,0.05);">
+                <img src="{row.get('Capa_Manual','')}" style="max-width:100%; max-height:100%; object-fit:contain;">
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("### 🛠️ Simulação de Investimento")
+        st.markdown('<div style="background-color: #f9f9f9; padding: 20px; border-radius: 12px; border: 1px solid #e0e0e0; margin-top:10px;">', unsafe_allow_html=True)
+        st.markdown('<p style="margin:0 0 15px 0; font-size:12px; color:#666; text-transform:uppercase; font-weight:bold; letter-spacing:1px;">🛠️ Terminal de Simulação de Ativo</p>', unsafe_allow_html=True)
+        
         col_sim1, col_sim2 = st.columns(2)
         with col_sim1:
-            novo_capex = st.number_input("Estimativa de Obra (€)", value=capex_base, step=1000.0)
+            novo_capex = st.number_input("Estimativa de Obra (€)", value=capex_base, step=1000.0, format="%.2f")
         with col_sim2:
             valor_sugerido = exit_base if exit_base > 0 else preco_lista * 1.3
-            novo_exit = st.number_input("Preço de Venda Alvo (€)", value=valor_sugerido, step=1000.0)
+            novo_exit = st.number_input("Preço de Venda Alvo (€)", value=valor_sugerido, step=1000.0, format="%.2f")
 
         foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
         lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
         
         st.markdown(f"""
-            <div style="background:#f0f0f0; padding:25px; border-radius:12px; border:2px dashed #bfa573; text-align:center; margin-top:20px;">
-                <h4 style="margin:0; color:#1a1a1a;">📊 Relatório Financeiro Preliminar</h4>
-                <p style="font-size:13px; color:#666; font-weight:700; margin:10px 0;">
-                    Projeção de Lucro Flip: <span style="color:#bfa573; font-size:18px;">{lucro_estimado:,.2f}€</span>
-                </p>
+            <div style="background:#1a1a1a; padding:20px; border-radius:8px; border-left: 5px solid #bfa573; margin-top:20px; text-align:center;">
+                <span style="color:#ffffff; font-size:11px; text-transform:uppercase; letter-spacing:2px;">Projeção de Lucro Flip</span><br>
+                <span style="color:#bfa573; font-size:28px; font-weight:bold;">{lucro_estimado:,.2f}€</span>
+                <p style="color:#888; font-size:10px; margin:5px 0 0 0;">*Cálculo baseado no modelo de Engenharia de Negócios 5D P.M.M.</p>
             </div>
         """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True) # Fecha o container cinza
 
-        lead_contacto = st.text_input("O seu Nome ou Email", placeholder="ex: Sr. Silva / joao@email.com")
+        st.write("<br>", unsafe_allow_html=True)
+        lead_contacto = st.text_input("Identifique-se para validar este estudo", placeholder="Seu Nome ou Email...")
 
-        if st.button("🔓 Desbloquear e Enviar Relatório", key="btn_desbloquear"):
+        if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
             if lead_contacto:
                 dados_relatorio = {
                     "relatorio_ref": ref,
@@ -271,16 +276,15 @@ elif st.session_state.page == "DETALHE":
                     "relatorio_capex": f"{novo_capex:,.2f}€",
                     "relatorio_exit": f"{novo_exit:,.2f}€",
                     "relatorio_invest": f"{invest_total:,.2f}€",
-                    "relatorio_adn": "", 
                     "simulou": foi_simulado
                 }
                 enviar_para_sheet(dados_relatorio)
-                st.success("Relatório preparado. A abrir contacto...")
-                msg_wa = f"Olá Paulo, solicitei o relatório do Ativo {ref}. Nome: {lead_contacto}. Lucro Simulado: {lucro_estimado:,.2f}€."
+                st.success("Dados validados. A abrir ligação prioritária...")
+                msg_wa = f"Olá Paulo, Verifiquei os resultados {ref}. Nome: {lead_contacto}. Projeção: {lucro_estimado:,.2f}€."
                 url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
                 st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
             else:
-                st.error("Por favor, identifique-se.")
+                st.error("A identificação é necessária para aceder ao dossier técnico.")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
