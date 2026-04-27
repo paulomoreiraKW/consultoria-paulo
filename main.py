@@ -229,7 +229,6 @@ elif st.session_state.page == "DETALHE":
         exit_base = safe_float(row.get("Preco_Exit", 0))
         invest_total = safe_float(row.get("Investimento_Total", 0))
 
-        # Cabeçalho do Ativo
         st.markdown(f"""
             <div class="white-solid-box" style="margin-top:15px; border-bottom: 2px solid #1a1a1a;">
                 <h2 style="color:#1a1a1a; margin:0; font-weight:300; font-size:22px;">{row.get('Tipo')} em {row.get('Localidade')}</h2>
@@ -240,8 +239,8 @@ elif st.session_state.page == "DETALHE":
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown('<div style="background-color: #f9f9f9; padding: 20px; border-radius: 12px; border: 1px solid #e0e0e0; margin-top:10px;">', unsafe_allow_html=True)
-        st.markdown('<p style="margin:0 0 15px 0; font-size:12px; color:#666; text-transform:uppercase; font-weight:bold; letter-spacing:1px;">🛠️ Terminal de Simulação de Ativo</p>', unsafe_allow_html=True)
+        st.markdown('<div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #bfa573; margin-top:10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">', unsafe_allow_html=True)
+        st.markdown('<p style="margin:0 0 15px 0; font-size:12px; color:#1a1a1a; text-transform:uppercase; font-weight:bold; letter-spacing:1px; border-bottom: 1px solid #eee; padding-bottom:10px;">🛠️ Simulador de Investimento</p>', unsafe_allow_html=True)
         
         col_sim1, col_sim2 = st.columns(2)
         with col_sim1:
@@ -254,16 +253,17 @@ elif st.session_state.page == "DETALHE":
         lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
         
         st.markdown(f"""
-            <div style="background:#1a1a1a; padding:20px; border-radius:8px; border-left: 5px solid #bfa573; margin-top:20px; text-align:center;">
-                <span style="color:#ffffff; font-size:11px; text-transform:uppercase; letter-spacing:2px;">Projeção de Lucro Flip</span><br>
-                <span style="color:#bfa573; font-size:28px; font-weight:bold;">{lucro_estimado:,.2f}€</span>
-                <p style="color:#888; font-size:10px; margin:5px 0 0 0;">*Cálculo baseado no modelo de Engenharia de Negócios 5D P.M.M.</p>
+            <div style="text-align:center; margin-top:20px; padding:15px; border-top:1px solid #eee;">
+                <span style="color:#666; font-size:13px;">Projeção de Lucro Flip</span><br>
+                <span style="color:#bfa573; font-size:32px; font-weight:bold;">{lucro_estimado:,.2f}€</span>
+                <div style="width:40px; height:2px; background:#1a1a1a; margin:10px auto;"></div>
+                <p style="color:#888; font-size:10px; margin:0;">*Cálculo baseado na Metodologia 5D P.M.M.</p>
             </div>
         """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True) # Fecha o container cinza
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.write("<br>", unsafe_allow_html=True)
-        lead_contacto = st.text_input("Identifique-se para validar este estudo", placeholder="Seu Nome ou Email...")
+        lead_contacto = st.text_input("Para mais detalhes, preencha com:", placeholder="Seu Nome ou Email...")
 
         if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
             if lead_contacto:
@@ -287,7 +287,6 @@ elif st.session_state.page == "DETALHE":
                 st.error("A identificação é necessária para aceder ao dossier técnico.")
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 else:
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
     col_l, col_r = st.columns([1, 1.8])
