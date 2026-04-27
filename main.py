@@ -26,7 +26,7 @@ def get_base64(bin_file):
 
 def safe_float(value):
     try:
-        return float(str(value).replace("%","").replace(",",".").replace("€","").replace(" ","").strip())
+        return float(str(value).replace("%","").replace(",",".").replace("€","").replace(" ","").replace("\xa0","").strip())
     except:
         return 0
 
@@ -42,8 +42,8 @@ def load_data(url):
             data = data[pd.to_numeric(data["Score_PM5D"], errors="coerce").fillna(0) >= 3]
         if "Status_Scraping" in data.columns:
             data = data[data["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
-        if "Decisão" in data.columns:
-            data = data[data["Decisão"].str.upper().isin(["APROVADO", "SIM", "OK"])]
+        if "Decisao" in data.columns:
+            data = data[data["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])]
         return data.reset_index(drop=True)
     except Exception:
         return pd.DataFrame()
@@ -200,7 +200,7 @@ if st.session_state.page == "LOJA":
         cols = st.columns(2)
         for i, row in df.iterrows():
             with cols[i % 2]:
-                preco = safe_float(row.get("Preço", 0))
+                preco = safe_float(row.get("Preco_Listagem", 0))
                 st.markdown(f"""
                 <div class="white-solid-box" style="min-height:350px;">
                     <img src="{row.get('Capa_Manual', '')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
@@ -209,7 +209,7 @@ if st.session_state.page == "LOJA":
                     <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b>
                 </div>
                 """, unsafe_allow_html=True)
-                if st.button(f"Ficha Técnica Ref: {row.get('Referência')}", key=f"gal_{i}"):
+                if st.button(f"Ficha Técnica Ref: {row.get('Referencia')}", key=f"gal_{i}"):
                     st.session_state.selected_imovel = row.to_dict()
                     st.session_state.page = "DETALHE"
                     st.rerun()
@@ -223,9 +223,9 @@ elif st.session_state.page == "DETALHE":
         st.rerun()
     
     if row:
-        preco = safe_float(row.get("Preço", 0))
-        area = safe_float(row.get("Área_Útil", 0))
-        ref = row.get("Referência", "N/A")
+        preco = safe_float(row.get("Preco_Listagem", 0))
+        area = safe_float(row.get("Area_m2", 0))
+        ref = row.get("Referencia", "N/A")
         
         st.markdown(f"""
             <div class="white-solid-box" style="margin-top:15px;">
