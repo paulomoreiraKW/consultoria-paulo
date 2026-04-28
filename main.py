@@ -65,14 +65,32 @@ def load_data(url):
     try:
         data = pd.read_csv(url)
         data = data.fillna("")
-        if "Score_PM5D" in data.columns:
-            data = data[pd.to_numeric(data["Score_PM5D"], errors="coerce").fillna(0) >= 3]
-        if "Status_Scraping" in data.columns:
-            data = data[data["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
+        
+        if 'Titulo' in data.columns and 'Tipo' not in data.columns:
+            data = data.rename(columns={'Titulo': 'Tipo'})
+        data = data.rename(columns={'Preço': 'Preco_Listagem', 'Área': 'Area_m2'})
+
+        for index, row in data.iterrows():
+            p_calc = utils.safe_float_portugal(row.get("Preco_Listagem", 0))
+            a_calc = utils.safe_float_portugal(row.get("Area_m2", 0))
+            
+            val_score = str(row.get("Score_PM5D", "")).strip()
+
+            if val_score in ["", "0", "0.0", "nan"]:
+                resultado = utils.calcular_score(
+                    titulo=str(row.get('Tipo', '')),
+                    preco=p_calc,
+                    localidade=str(row.get('Localidade', '')),
+                    area=a_calc
+                )
+                data.at[index, "Score_PM5D"] = resultado
+
         if "Decisao" in data.columns:
-            data = data[data["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])]
+            data = data[data["Decisao"].astype(str).str.lower().isin(["aprovado", "sim", "ok", ""])]
+            
         return data.reset_index(drop=True)
-    except:
+    except Exception as e:
+        st.error(f"Erro ao despertar o cérebro: {e}")
         return pd.DataFrame()
 
 df = load_data(URL)
