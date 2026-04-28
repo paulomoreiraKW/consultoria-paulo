@@ -64,33 +64,34 @@ URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 def load_data(url):
     try:
         data = pd.read_csv(url)
-        data = data.fillna("")
         
-        if 'Titulo' in data.columns and 'Tipo' not in data.columns:
-            data = data.rename(columns={'Titulo': 'Tipo'})
-        data = data.rename(columns={'Preço': 'Preco_Listagem', 'Área': 'Area_m2'})
+        data = data.dropna(subset=['Referencia']) 
+        data = data.fillna("")
+
+        if 'Titulo' in data.columns:
+            data['Tipo'] = data['Titulo']
 
         for index, row in data.iterrows():
-            p_calc = utils.safe_float_portugal(row.get("Preco_Listagem", 0))
-            a_calc = utils.safe_float_portugal(row.get("Area_m2", 0))
+            current_score = str(row.get("Score_PM5D", "")).strip()
             
-            val_score = str(row.get("Score_PM5D", "")).strip()
-
-            if val_score in ["", "0", "0.0", "nan"]:
-                resultado = utils.calcular_score(
+            if current_score in ["", "0", "0.0", "nan"]:
+                p_calc = utils.safe_float_portugal(row.get("Preco_Listagem", 0))
+                a_calc = utils.safe_float_portugal(row.get("Area_m2", 0))
+                
+                score_final = utils.calcular_score(
                     titulo=str(row.get('Tipo', '')),
                     preco=p_calc,
                     localidade=str(row.get('Localidade', '')),
                     area=a_calc
                 )
-                data.at[index, "Score_PM5D"] = resultado
+                data.at[index, "Score_PM5D"] = score_final
 
         if "Decisao" in data.columns:
             data = data[data["Decisao"].astype(str).str.lower().isin(["aprovado", "sim", "ok", ""])]
-            
+
         return data.reset_index(drop=True)
     except Exception as e:
-        st.error(f"Erro ao despertar o cérebro: {e}")
+        st.error(f"Erro técnico na leitura dos dados: {e}")
         return pd.DataFrame()
 
 df = load_data(URL)
