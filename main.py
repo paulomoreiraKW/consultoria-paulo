@@ -263,7 +263,7 @@ elif st.session_state.page == "DETALHE":
         exit_base = safe_float(row.get("Preco_Exit", 0))
         invest_total = safe_float(row.get("Investimento_Total", 0))
      
-        st.markdown(f"""
+st.markdown(f"""
                 <div class="white-solid-box" style="min-height:380px;">
                     <img src="{row.get('Capa_Manual', '')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
                     <b style="font-size:16px; display: block;">{row.get('Tipo')}</b>
@@ -288,7 +288,7 @@ elif st.session_state.page == "DETALHE":
                         </a>
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
                 
         st.markdown("""
             <style>
