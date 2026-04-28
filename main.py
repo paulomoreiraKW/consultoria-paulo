@@ -6,6 +6,7 @@ import time
 import requests
 import re
 import hashlib
+import utils
 
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
