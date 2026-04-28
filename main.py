@@ -6,7 +6,6 @@ import time
 import requests
 import re
 import hashlib
-import utils
 
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
@@ -46,11 +45,9 @@ def format_pt(n):
 def enviar_para_sheet(payload):
     SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec"
     assinatura_dados = hashlib.md5(str(payload).encode()).hexdigest()
-    
     if "ultima_assinatura" in st.session_state:
         if st.session_state.ultima_assinatura == assinatura_dados:
             return False            
-            
     try:
         res = requests.post(SCRIPT_URL, json=payload, timeout=10)
         if res.status_code == 200:
@@ -67,34 +64,15 @@ URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 def load_data(url):
     try:
         data = pd.read_csv(url)
-        
-        data = data.dropna(subset=['Referencia']) 
         data = data.fillna("")
-
-        if 'Titulo' in data.columns:
-            data['Tipo'] = data['Titulo']
-
-        for index, row in data.iterrows():
-            current_score = str(row.get("Score_PM5D", "")).strip()
-            
-            if current_score in ["", "0", "0.0", "nan"]:
-                p_calc = utils.safe_float_portugal(row.get("Preco_Listagem", 0))
-                a_calc = utils.safe_float_portugal(row.get("Area_m2", 0))
-                
-                score_final = utils.calcular_score(
-                    titulo=str(row.get('Tipo', '')),
-                    preco=p_calc,
-                    localidade=str(row.get('Localidade', '')),
-                    area=a_calc
-                )
-                data.at[index, "Score_PM5D"] = score_final
-
+        if "Score_PM5D" in data.columns:
+            data = data[pd.to_numeric(data["Score_PM5D"], errors="coerce").fillna(0) >= 3]
+        if "Status_Scraping" in data.columns:
+            data = data[data["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
         if "Decisao" in data.columns:
-            data = data[data["Decisao"].astype(str).str.lower().isin(["aprovado", "sim", "ok", ""])]
-
+            data = data[data["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])]
         return data.reset_index(drop=True)
-    except Exception as e:
-        st.error(f"Erro técnico na leitura dos dados: {e}")
+    except:
         return pd.DataFrame()
 
 df = load_data(URL)
@@ -366,7 +344,7 @@ elif st.session_state.page == "DETALHE":
 
         lead_contacto = st.text_input("Para mais detalhes, preencha com:", placeholder="Seu Nome ou Email...")
 
-if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
+        if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
             if lead_contacto:
                 e_email = re.match(r"[^@]+@[^@]+\.[^@]+", lead_contacto)
                 e_telefone = len(re.sub(r"\D", "", lead_contacto)) >= 9
