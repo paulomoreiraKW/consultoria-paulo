@@ -10,12 +10,24 @@ def normalizar(txt):
     txt = unicodedata.normalize("NFD", txt).encode("ascii", "ignore").decode("utf-8")
     return txt
 
+def safe_float_portugal(valor):
+    if not valor or str(valor).strip() == "": return 0.0
+    try:
+        s = str(valor).replace('€', '').replace('\xa0', '').replace(' ', '')
+        (ex: 190.000,00), tira o ponto e troca vírgula por ponto
+        if ',' in s and '.' in s:
+            s = s.replace('.', '').replace(',', '.')
+        elif ',' in s:
+            s = s.replace(',', '.')
+        return float(s)
+    except:
+        return 0.0
+
 def get_zona_data(localidade):
-    loc = normalizar(localidade)
-    for zona, dados in REFERENCIAIS_MERCADO_2026.items():
-        if zona == "DEFAULT":
-            continue
-        if any(normalizar(f) in loc for f in dados["freguesias"]):
+    loc_norm = normalizar(localidade)
+    for zona_id, dados in REFERENCIAIS_MERCADO_2026.items():
+        if zona_id == "DEFAULT": continue
+        if any(normalizar(freg) in loc_norm for freg in dados.get("freguesias", [])):
             return dados
     return REFERENCIAIS_MERCADO_2026["DEFAULT"]
 
