@@ -257,7 +257,8 @@ elif st.session_state.page == "DETALHE":
         st.rerun()
     if row:
         ref = row.get("Referencia", "N/A")
-        preco_lista = safe_float(row.get("Preco_Listagem", 0))
+        # Mantendo exatamente como tens no resto do código
+        preco_listagem = safe_float(row.get("Preco_Listagem", 0)) 
         capex_base = safe_float(row.get("CAPEX_Estimado", 0))
         exit_base = safe_float(row.get("Preco_Exit", 0))
         invest_total = safe_float(row.get("Investimento_Total", 0))
@@ -267,7 +268,7 @@ elif st.session_state.page == "DETALHE":
                     <img src="{row.get('Capa_Manual', '')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
                     <b style="font-size:16px; display: block;">{row.get('Tipo')}</b>
                     <span style="color:#666; font-size:13px; display: block;">{row.get('Localidade')}</span>
-                    <b style="font-size:18px; color:#bfa573; display: block; margin-bottom: 15px;">{preco:,.0f}€</b>
+                    <b style="font-size:18px; color:#bfa573; display: block; margin-bottom: 15px;">{preco_listagem:,.0f}€</b>
                     
                     <div style="text-align: left;">
                         <a href="{row.get('Link_Fonte', '')}" target="_blank" style="text-decoration: none;">
@@ -288,6 +289,7 @@ elif st.session_state.page == "DETALHE":
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+                
         st.markdown("""
             <style>
                 .titulo-simulador {
