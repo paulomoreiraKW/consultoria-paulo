@@ -218,11 +218,29 @@ if st.session_state.page == "LOJA":
             with cols[i % 2]:
                 preco = safe_float(row.get("Preco_Listagem", 0))
                 st.markdown(f"""
-                <div class="white-solid-box" style="min-height:350px;">
+                <div class="white-solid-box" style="min-height:380px;">
                     <img src="{row.get('Capa_Manual', '')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
-                    <b style="font-size:16px;">{row.get('Tipo')}</b><br>
-                    <span style="color:#666; font-size:13px;">{row.get('Localidade')}</span><br>
-                    <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b>
+                    <b style="font-size:16px; display: block;">{row.get('Tipo')}</b>
+                    <span style="color:#666; font-size:13px; display: block;">{row.get('Localidade')}</span>
+                    <b style="font-size:18px; color:#bfa573; display: block; margin-bottom: 15px;">{preco:,.0f}€</b>
+                    
+                    <div style="text-align: left;">
+                        <a href="{row.get('Link_Fonte', '')}" target="_blank" style="text-decoration: none;">
+                            <span style="
+                                color: #bfa573; 
+                                font-size: 10px; 
+                                font-weight: 800; 
+                                text-transform: uppercase; 
+                                letter-spacing: 1px; 
+                                border: 1px solid #bfa573; 
+                                padding: 6px 12px; 
+                                border-radius: 4px;
+                                display: inline-block;
+                            ">
+                                🔗 Consultar Fonte KW
+                            </span>
+                        </a>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button(f"Ficha Técnica Ref: {row.get('Referencia')}", key=f"gal_{i}"):
