@@ -7,6 +7,29 @@ import requests
 import re
 import hashlib
 
+from utils import calcular_score, get_zona_label
+
+def processar_leads_inteligentes(df):
+    if df.empty:
+        return df
+    
+    df["Area_m2"] = df["Area_m2"].apply(safe_float)
+    df["Preco_Listagem"] = df["Preco_Listagem"].apply(safe_float)
+
+    df["Score_Calculado"] = df.apply(
+        lambda row: calcular_score(
+            row.get("Titulo") or row.get("Tipo") or "",
+            row["Preco_Listagem"],
+            row.get("Localidade", ""),
+            row["Area_m2"]
+        ),
+        axis=1
+    )
+    
+    df["Zona_Dinamica"] = df["Localidade"].apply(get_zona_label)
+    
+    return df
+
 if "page" not in st.session_state:
     st.session_state.page = "HOME"
 
