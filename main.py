@@ -183,7 +183,10 @@ st.markdown(f"""
 @st.fragment
 def render_carousel_fragment(df_data):
     if not df_data.empty:
-        # 1. Desenha o imóvel atual
+
+        if "idx" not in st.session_state:
+            st.session_state.idx = 0            
+
         row = df_data.iloc[st.session_state.idx]
         st.markdown(f"""
         <div class="preview-window">
@@ -197,14 +200,13 @@ def render_carousel_fragment(df_data):
         st.components.v1.html(
             """
             <script>
-            window.parent.document.dispatchEvent(new CustomEvent("streamlit:render"));
+            setTimeout(function() {
+                window.parent.document.dispatchEvent(new CustomEvent("streamlit:render"));
+            }, 3000); // 3 segundos
             </script>
             """,
             height=0,
         )
-        
-        time.sleep(3) 
-        st.rerun()
 
 if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
     st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
