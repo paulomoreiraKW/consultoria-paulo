@@ -267,16 +267,46 @@ elif st.session_state.page == "DETALHE":
                 <p class="titulo-simulador">🛠️ Simulador de Investimento</p>
         """, unsafe_allow_html=True)
         
-        col_sim1, col_sim2 = st.columns(2)
+col_sim1, col_sim2 = st.columns(2)
         with col_sim1:
             novo_capex = st.number_input("**Estimativa de Obra (€)**", value=capex_base, step=1000.0, format="%.2f")
+        
         with col_sim2:
-            valor_sugerido = exit_base if exit_base > 0 else preco_lista * 1.3
+            valor_sugerido = exit_base if exit_base > 0 else 0.0
             novo_exit = st.number_input("**Preço de Venda Alvo (€)**", value=valor_sugerido, step=1000.0, format="%.2f")
+        
         st.markdown("</div>", unsafe_allow_html=True)
 
+        if exit_base == 0:
+            st.markdown(f"""
+                <div style="
+                    background: rgba(255, 255, 255, 0.6); 
+                    backdrop-filter: blur(10px); 
+                    -webkit-backdrop-filter: blur(10px);
+                    border: 1px solid #bfa573; 
+                    border-radius: 12px; 
+                    padding: 15px; 
+                    margin: 15px auto; 
+                    max-width: 600px; 
+                    text-align: center;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                ">
+                    <span style="color: #1a1a1a; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">
+                        🔍 Análise de Viabilidade em Curso
+                    </span><br>
+                    <div style="width: 30px; height: 1px; background: #bfa573; margin: 8px auto;"></div>
+                    <span style="color: #555; font-size: 11px; font-family: 'Inter', sans-serif;">
+                        Imóvel sob análise técnica. Os valores de projecção serão actualizados após validação de mercado e métricas 5D.
+                    </span>
+                </div>
+            """, unsafe_allow_html=True)
+
         foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
-        lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
+        
+        if novo_exit == 0:
+            lucro_estimado = 0.0
+        else:
+            lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
         
         st.markdown(f"""
             <div style="max-width: 600px; margin: 10px auto; display: flex; justify-content: center;">
