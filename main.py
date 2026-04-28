@@ -180,14 +180,15 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-@st.fragment
+@st.fragment(run_every=3)  
 def render_carousel_fragment(df_data):
     if not df_data.empty:
-
+        # Inicializa o índice se não existir
         if "idx" not in st.session_state:
-            st.session_state.idx = 0            
-
+            st.session_state.idx = 0
+            
         row = df_data.iloc[st.session_state.idx]
+        
         st.markdown(f"""
         <div class="preview-window">
             <img src="{row.get('Capa_Manual','')}" style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:5px;">
@@ -196,17 +197,6 @@ def render_carousel_fragment(df_data):
         """, unsafe_allow_html=True)
 
         st.session_state.idx = (st.session_state.idx + 1) % len(df_data)
-
-        st.components.v1.html(
-            """
-            <script>
-            setTimeout(function() {
-                window.parent.document.dispatchEvent(new CustomEvent("streamlit:render"));
-            }, 3000); // 3 segundos
-            </script>
-            """,
-            height=0,
-        )
 
 if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
     st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
