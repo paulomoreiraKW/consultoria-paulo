@@ -88,18 +88,37 @@ URL_ACTIVOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=ou
 def load_data(url):
     try:
         data = pd.read_csv(url)
-        data = data.fillna("")
-        if "Score_PM5D" in data.columns:
-            data = data[pd.to_numeric(data["Score_PM5D"], errors="coerce").fillna(0) >= 3]
-        if "Status_Scraping" in data.columns:
-            data = data[data["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
-        if "Decisao" in data.columns:
-            data = data[data["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])]
-        return data.reset_index(drop=True)
+        return data.fillna("")
     except:
         return pd.DataFrame()
 
-df = load_data(URL)
+df_bruto = load_data(URL_LEADS)
+
+df_leads = processar_leads_inteligentes(df_bruto)
+
+st.subheader("🔬 Painel de Análise de Novas Leads")
+if st.checkbox("🔬 Ver análise detalhada do cérebro"):
+    if not df_leads.empty:
+        st.write(f"O sistema analisou {len(df_leads)} imóveis em tempo real.")
+        colunas_ver = [c for c in ["Referencia", "Localidade", "Preco_Listagem", "Area_m2", "Score_Calculado", "Zona_Dinamica"] if c in df_leads.columns]
+        st.dataframe(df_leads[colunas_ver])
+    else:
+        st.warning("Sem leads para analisar no momento.")
+
+data = df_leads.copy()
+if not data.empty:
+    if "Score_PM5D" in data.columns:
+        data["Score_PM5D"] = pd.to_numeric(data["Score_PM5D"], errors="coerce").fillna(0)
+        data["Score_PM5D"] = data["Score_PM5D"].replace(0, pd.NA).fillna(data["Score_Calculado"])
+    else:
+        data["Score_PM5D"] = data["Score_Calculado"]
+
+    data = data[data["Score_PM5D"] >= 1]
+    
+    if "Decisao" in data.columns:
+         data = data[(data["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK", ""])) | (data["Decisao"] == "")]
+
+    data = data.sort_values(by="Score_PM5D", ascending=False).reset_index(drop=True)
 
 fundo_marmore = get_base64("Background.svg")
 
