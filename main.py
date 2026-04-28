@@ -267,7 +267,7 @@ elif st.session_state.page == "DETALHE":
                 <p class="titulo-simulador">🛠️ Simulador de Investimento</p>
         """, unsafe_allow_html=True)
         
-col_sim1, col_sim2 = st.columns(2)
+        col_sim1, col_sim2 = st.columns(2)
         with col_sim1:
             novo_capex = st.number_input("**Estimativa de Obra (€)**", value=capex_base, step=1000.0, format="%.2f")
         
