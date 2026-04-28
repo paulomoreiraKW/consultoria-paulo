@@ -52,7 +52,6 @@ def calcular_score(titulo, preco, localidade, area):
     zona = get_zona_data(localidade)
     t = normalizar(titulo)
     
-    # Define a meta baseada no estado do imóvel
     if any(w in t for w in ["novo", "nova", "construcao"]):
         meta = zona["novo"]
     elif any(w in t for w in ["pavilhao", "armazem", "industrial"]):
@@ -60,7 +59,6 @@ def calcular_score(titulo, preco, localidade, area):
     else:
         meta = zona["usado"]
 
-    # Lógica de Score (Quanto menor o valor_m2 em relação à meta, melhor)
     ratio = valor_m2 / meta
     if ratio <= 0.7: return 5
     if ratio <= 0.85: return 4
