@@ -46,9 +46,11 @@ def format_pt(n):
 def enviar_para_sheet(payload):
     SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec"
     assinatura_dados = hashlib.md5(str(payload).encode()).hexdigest()
+    
     if "ultima_assinatura" in st.session_state:
-        if st.session_state.ultima_assinatura == signature_dados:
+        if st.session_state.ultima_assinatura == assinatura_dados:
             return False            
+            
     try:
         res = requests.post(SCRIPT_URL, json=payload, timeout=10)
         if res.status_code == 200:
