@@ -289,8 +289,8 @@ elif st.session_state.page == "DETALHE":
                     </div>
                 </div>
         """, unsafe_allow_html=True)
-                
-     st.markdown("""
+
+        st.markdown("""
             <style>
                 .titulo-simulador {
                     text-align: center; font-size: 16px; color: #1a1a1a; font-weight: bold;
