@@ -355,7 +355,8 @@ if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
                         "relatorio_exit": format_pt(novo_exit) + "€",
                         "relatorio_invest": format_pt(invest_total) + "€",
                         "relatorio_adn": descritivo_adn,
-                        "simulou": foi_simulado
+                        "simulou": foi_simulado,
+                        "relatorio_link": row.get("Link_Fonte", "")  # Esta linha agora tem destino na Sheet
                     }
 
                     enviar_para_sheet(dados_relatorio)
