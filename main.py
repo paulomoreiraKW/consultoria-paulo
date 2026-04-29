@@ -6,23 +6,27 @@ import time
 import requests
 import re
 import hashlib
-from utils import calcular_score, get_zona_label # Importa do teu novo utils.py
+from utils import calcular_score, get_zona_label
 
-# 1. CONFIGURAÇÕES DE SESSÃO E PÁGINA
+# ==========================================
+# 1. CONFIGURAÇÕES E ESTADO DA SESSÃO
+# ==========================================
 if "page" not in st.session_state: st.session_state.page = "HOME"
+if "selected_imovel" not in st.session_state: st.session_state.selected_imovel = None
 if "idx" not in st.session_state: st.session_state.idx = 0
+if "last_update" not in st.session_state: st.session_state.last_update = time.time()
 
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
-# 2. FUNÇÕES DE CARREGAMENTO (Definir ANTES de usar)
-@st.cache_data(ttl=3600)
-def load_data(url):
-    try:
-        data = pd.read_csv(url)
-        return data.fillna("")
-    except Exception as e:
-        st.error(f"Erro ao carregar dados: {e}")
-        return pd.DataFrame()
+# ==========================================
+# 2. FUNÇÕES AUXILIARES (DEFINIR PRIMEIRO)
+# ==========================================
+def get_base64(bin_file):
+    """Converte ficheiros para base64 para uso no CSS (Backgrounds/Imagens)"""
+    if os.path.exists(bin_file):
+        with open(bin_file, 'rb') as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
 
 def safe_float(value):
     if value is None or value == "": return 0.0
@@ -36,21 +40,35 @@ def safe_float(value):
     except:
         return 0.0
 
-# 3. ENDEREÇOS DO GOOGLE SHEETS
+def format_pt(n):
+    return f"{n:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+@st.cache_data(ttl=3600)
+def load_data(url):
+    try:
+        data = pd.read_csv(url)
+        return data.fillna("")
+    except:
+        return pd.DataFrame()
+
+# ==========================================
+# 3. CONEXÃO AO GOOGLE SHEETS
+# ==========================================
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
 URL_ACTIVOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=ACTIVOS"
 URL_CONFIG = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=CONFIG_MERCADO"
 
-# 4. PROCESSAMENTO DAS LEADS COM O "CÉREBRO" NOVO
+# ==========================================
+# 4. PROCESSAMENTO DAS LEADS (CÉREBRO 2026)
+# ==========================================
 def processar_leads_inteligentes(df, df_conf):
-    if df.empty or df_conf.empty:
-        return df
+    if df.empty: return df
     
     df["Area_m2"] = df["Area_m2"].apply(safe_float)
     df["Preco_Listagem"] = df["Preco_Listagem"].apply(safe_float)
 
-    # O Score agora recebe a tabela de configuração do Sheets
+    # Nota: calcular_score no utils.py agora recebe df_conf como último argumento
     df["Score_Calculado"] = df.apply(
         lambda row: calcular_score(
             row.get("Titulo") or "",
@@ -61,14 +79,29 @@ def processar_leads_inteligentes(df, df_conf):
         ),
         axis=1
     )
-    
     df["Zona_Dinamica"] = df["Localidade"].apply(get_zona_label)
     return df
 
-# 5. EXECUÇÃO DO CARREGAMENTO
+# CARREGAMENTO EFETIVO
 df_bruto = load_data(URL_LEADS)
-df_config = load_data(URL_CONFIG) # Carrega a tua nova aba de preços
+df_config = load_data(URL_CONFIG)
 df_leads = processar_leads_inteligentes(df_bruto, df_config)
+
+# ==========================================
+# 5. INTERFACE (CSS E LAYOUT)
+# ==========================================
+fundo_marmore = get_base64("Background.svg") # Agora a função já foi definida acima!
+
+st.markdown(f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
+        background-size: cover;
+        background-attachment: fixed;
+    }}
+    /* ... (Resto do teu CSS de botões e cards) ... */
+    </style>
+""", unsafe_allow_html=True)
 
 st.subheader("🔬 Painel de Análise de Novas Leads")
 if st.checkbox("🔬 Ver análise detalhada do cérebro"):
