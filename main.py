@@ -148,43 +148,13 @@ fundo_marmore = get_base64("Background.svg")
 # --- TUDO DENTRO DE UM ÚNICO BLOCO PARA NÃO DAR ERRO ---
 st.markdown(f"""
     <style>
-    /* 1. Fundo com Imagem e Blur */
     .stApp {{
         background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
         background-size: cover;
         background-attachment: fixed;
-        background-position: center;
     }}
     
-    .stApp::before {{
-        content: "";
-        position: fixed;
-        top: 0; left: 0; 
-        width: 100vw; height: 100vh;
-        backdrop-filter: blur(3px); 
-        -webkit-backdrop-filter: blur(3px);
-        z-index: -1;
-    }}
-
-    /* 2. Estrutura de Cards (Onde dava o erro) */
-    .main-protection-card {{
-        background-color: rgba(253, 250, 245, 0.99) !important;
-        padding: 25px 35px 10px 35px;
-        border-radius: 15px;
-        border-left: 8px solid #bfa573;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        margin-bottom: 10px;
-    }}
-
-    /* 3. Caixas de Serviço e Brancos Solidos */
-    .white-solid-box, .service-box {{
-        background-color: #ffffff !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
-        border-radius: 12px;
-        padding: 20px;
-    }}
-
-    /* 4. Botões e Links */
+    /* Botões e Links */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
@@ -202,13 +172,29 @@ st.markdown(f"""
     
     div.stButton > button:hover, div.stDownloadButton > button:hover, .stLinkButton > a:hover {{
         background-color: transparent !important;
-        color: #bfa573 !important;
+        color: #1a1a1a !important;
         border-color: #bfa573 !important;
         transform: translateY(-1px) !important;
     }}
-    </style>
-""", unsafe_allow_html=True)
-# --- AGORA SIM, O PYTHON CONTINUA DAQUI ---
+
+    /* Estrutura de Cards */
+    .main-protection-card {{
+        background-color: rgba(253, 250, 245, 0.99);
+        padding: 25px 35px 10px 35px;
+        border-radius: 15px;
+        border-left: 8px solid #bfa573;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        margin-bottom: 10px; 
+    }}
+
+    .white-solid-box {{
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        border-bottom: 3px solid #bfa573;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }}
 
     .preview-window {{
         border: 2px dashed #bfa573;
