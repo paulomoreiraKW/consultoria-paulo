@@ -167,7 +167,7 @@ st.markdown(f"""
         background: rgba(255, 255, 255, 0.7); /* Cor branca com 70% de transparência */
         backdrop-filter: blur(5px); /* O desfoque que dá o ar premium */
         -webkit-backdrop-filter: blur(5px);
-    
+    }}
     /* Botões e Links */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
