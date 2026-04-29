@@ -40,17 +40,17 @@ SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
 URL_CONFIG = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=CONFIG_MERCADO"
 
-@st.cache_data(ttl=600) # Atualiza a cada 10 min
-def load_and_process_brain():
+@st.cache_data(ttl=600)
+def carregar_sistema_completo():
     try:
-        df_bruto = pd.read_csv(URL_LEADS).fillna("")
+        df_leads = pd.read_csv(URL_LEADS).fillna("")
         df_conf = pd.read_csv(URL_CONFIG).fillna("")
         
-        # Cálculos de Inteligência
-        df_bruto["Area_m2"] = df_bruto["Area_m2"].apply(safe_float)
-        df_bruto["Preco_Listagem"] = df_bruto["Preco_Listagem"].apply(safe_float)
+        # O Cérebro processa TODAS as Leads em tempo real (Quarentena)
+        df_leads["Area_m2"] = df_leads["Area_m2"].apply(safe_float)
+        df_leads["Preco_Listagem"] = df_leads["Preco_Listagem"].apply(safe_float)
         
-        df_bruto["Score_Calculado"] = df_bruto.apply(
+        df_leads["Score_Calculado"] = df_leads.apply(
             lambda row: calcular_score(
                 row.get("Titulo") or "", 
                 row["Preco_Listagem"], 
@@ -59,19 +59,17 @@ def load_and_process_brain():
                 df_conf
             ), axis=1
         )
+        df_leads["Zona_Dinamica"] = df_leads["Localidade"].apply(get_zona_label)
         
-        # Filtro de Qualidade: Apenas Score >= 1 (ou o que definires como mínimo para público)
-        df_final = df_bruto[df_bruto["Score_Calculado"] >= 1].copy()
+        # Filtro de Activos (O que já passou pelo teu "OK" no Sheets ou na App)
+        df_publico = df_leads[df_leads["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])].copy()
         
-        # Se houver coluna de Decisão manual, respeitá-la
-        if "Decisao" in df_final.columns:
-            df_final = df_final[df_final["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK", ""])]
-            
-        return df_final.sort_values(by="Score_Calculado", ascending=False).reset_index(drop=True)
+        return df_leads, df_publico.sort_values(by="Score_Calculado", ascending=False).reset_index(drop=True)
     except:
-        return pd.DataFrame()
+        return pd.DataFrame(), pd.DataFrame()
 
-df = load_and_process_brain()
+# Ativação
+df_quarentena, df = carregar_sistema_completo()
 
 # ==========================================
 # 3. COMPONENTES VISUAIS (CARROSSEL)
