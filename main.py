@@ -71,26 +71,28 @@ def carregar_sistema_completo():
 # Ativação
 df_quarentena, df = carregar_sistema_completo()
 
-# --- ZONA DE QUARENTENA (Só visível para ti) ---
-with st.expander("🔬 Análise de Novas Leads (Preview Técnico)"):
+# --- ZONA DE QUARENTENA (Radar Total do Paulo) ---
+with st.expander("🔬 Radar de Metodologia 5D (Análise Geral)"):
     if not df_quarentena.empty:
-        # Mostramos apenas o que AINDA NÃO foi aprovado (Decisao vazia)
-        leads_novas = df_quarentena[df_quarentena["Decisao"] == ""]
-        if not leads_novas.empty:
-            for idx, lead in leads_novas.iterrows():
-                col_a, col_b = st.columns([3, 1])
-                with col_a:
-                    st.markdown(f"**{lead['Titulo']}** ({lead['Localidade']})")
-                    st.caption(f"Zona: {lead['Zona_Dinamica']} | Preço/m2: {lead['Preco_Listagem']/lead['Area_m2']:.2f}€")
-                with col_b:
-                    st.metric("Score 5D", f"{lead['Score_Calculado']}/5")
-                
-                if st.button(f"🔍 Ver Draft Relatório: {lead['Referencia']}", key=f"draft_{idx}"):
-                    st.session_state.selected_imovel = lead.to_dict()
-                    st.session_state.page = "DETALHE"
-                    st.rerun()
-        else:
-            st.info("Não há novas leads para análise. Todas as entradas estão validadas.")
+        # Removido o filtro de leads_novas para mostrar TUDO o que está no sistema
+        for idx, lead in df_quarentena.iterrows():
+            # Criamos uma etiqueta visual para saberes o que já está na Loja
+            status = "✅ EM LOJA" if lead['Decisao'].upper() in ["APROVADO", "SIM", "OK"] else "⏳ QUARENTENA"
+            
+            col_a, col_b = st.columns([3, 1])
+            with col_a:
+                st.markdown(f"**{lead['Titulo']}** ({lead['Localidade']})")
+                st.caption(f"Status: {status} | Zona: {lead['Zona_Dinamica']} | Preço/m2: {lead['Preco_Listagem']/lead['Area_m2']:.2f}€")
+            with col_b:
+                st.metric("Score 5D", f"{lead['Score_Calculado']}/5")
+            
+            if st.button(f"🔍 Ver Análise Técnica: {lead['Referencia']}", key=f"draft_{idx}"):
+                st.session_state.selected_imovel = lead.to_dict()
+                st.session_state.page = "DETALHE"
+                st.rerun()
+            st.markdown("---") # Linha separadora entre leads
+    else:
+        st.warning("Nenhum dado encontrado no separador LEADS.")
 # ==========================================
 # 3. COMPONENTES VISUAIS (CARROSSEL)
 # ==========================================
