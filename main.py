@@ -73,7 +73,7 @@ df_quarentena, df = carregar_sistema_completo()
 # O sistema verifica se no URL escreveste /?pmm=2026
 query_params = st.query_params
 
-if query_params.get("ppkmor") == "=7":
+if query_params.get("/?ppkmor") == "=7":
     with st.expander("🔬 Radar de Metodologia 5D (Tabela de Auditoria)", expanded=True):
         if not df_quarentena.empty:
             df_view = df_quarentena.copy()
