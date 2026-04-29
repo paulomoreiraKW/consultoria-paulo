@@ -396,6 +396,32 @@ else: # HOME PAGE
 # NOVO BLOCO CONSOLIDADO (SERVIÇOS + CONTACTOS + RODAPÉ)
 # ==========================================
 
+st.markdown("""
+    <style>
+        .action-link {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 20px;
+            background-color: #1a1a1a;
+            color: #ffffff !important;
+            text-decoration: none !important;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            border: 1px solid #bfa573;
+        }
+        .action-link:hover {
+            background-color: #bfa573;
+            color: #1a1a1a !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- BLOCO DE SERVIÇOS (IGUAL AO TEU, MAS AGORA COM O CSS ATIVO) ---
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 
 m1, m2 = st.columns(2)
