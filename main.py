@@ -70,54 +70,48 @@ def carregar_sistema_completo():
 
 # Ativação
 df_quarentena, df = carregar_sistema_completo()
+# O sistema verifica se no URL escreveste /?pmm=2026
+query_params = st.query_params
 
-# --- ZONA DE QUARENTENA (Radar Total em Tabela) ---
-with st.expander("🔬 Radar de Metodologia 5D (Tabela de Auditoria)"):
-    if not df_quarentena.empty:
-        # 1. Preparar o DataFrame para visualização (limpar colunas desnecessárias)
-        df_view = df_quarentena.copy()
-        
-        # Criar a coluna de Status legível
-        df_view["Status"] = df_view["Decisao"].apply(
-            lambda x: "✅ LOJA" if str(x).upper() in ["APROVADO", "SIM", "OK"] else "⏳ QUARENTENA"
-        )
-        
-        # Calcular Preço/m2 para a tabela
-        df_view["P_m2"] = (df_view["Preco_Listagem"] / df_view["Area_m2"]).round(2)
-        
-        # Selecionar e ordenar colunas para o Paulo ler rápido
-        colunas_foco = ["Status", "Score_Calculado", "Titulo", "Localidade", "Zona_Dinamica", "Preco_Listagem", "Area_m2", "P_m2", "Referencia"]
-        df_final_view = df_view[colunas_foco].sort_values(by="Score_Calculado", ascending=False)
-
-        # 2. Mostrar a Tabela Interativa
-        st.dataframe(
-            df_final_view,
-            column_config={
-                "Score_Calculado": st.column_config.NumberColumn("⭐ Score", format="%d/5"),
-                "Preco_Listagem": st.column_config.NumberColumn("Preço (€)", format="%.2f€"),
-                "P_m2": st.column_config.NumberColumn("€/m2", format="%.2f€"),
-                "Status": st.column_config.TextColumn("Estado"),
-            },
-            hide_index=True,
-            use_container_width=True
-        )
-        
-        # 3. Seletor para abrir o detalhe (Já que em tabelas não dá para pôr botões em cada linha facilmente)
-        st.write("<br>", unsafe_allow_html=True)
-        escolha = st.selectbox("🎯 Selecione uma Referência para abrir Análise Detalhada:", 
-                              options=df_final_view["Referencia"].unique(),
-                              index=None,
-                              placeholder="Escolha o imóvel...")
-        
-        if escolha:
-            lead_selecionada = df_quarentena[df_quarentena["Referencia"] == escolha].iloc[0]
-            if st.button(f"🚀 Abrir Ficha de {escolha}"):
-                st.session_state.selected_imovel = lead_selecionada.to_dict()
-                st.session_state.page = "DETALHE"
-                st.rerun()
-                
-    else:
-        st.warning("Nenhum dado encontrado no separador LEADS.")
+if query_params.get("ppkmor") == "=7":
+    with st.expander("🔬 Radar de Metodologia 5D (Tabela de Auditoria)", expanded=True):
+        if not df_quarentena.empty:
+            df_view = df_quarentena.copy()
+            # Criar Status e Preço/m2 para tua análise rápida
+            df_view["Status"] = df_view["Decisao"].apply(
+                lambda x: "✅ LOJA" if str(x).upper() in ["APROVADO", "SIM", "OK"] else "⏳ QUARENTENA"
+            )
+            df_view["P_m2"] = (df_view["Preco_Listagem"] / df_view["Area_m2"]).round(2)
+            
+            # Colunas que tu precisas de ver para decidir
+            colunas_foco = ["Status", "Score_Calculado", "Titulo", "Localidade", "Preco_Listagem", "Area_m2", "P_m2", "Referencia"]
+            
+            st.dataframe(
+                df_final_view := df_view[colunas_foco].sort_values(by="Score_Calculado", ascending=False),
+                column_config={
+                    "Score_Calculado": st.column_config.NumberColumn("⭐ Score", format="%d/5"),
+                    "Preco_Listagem": st.column_config.NumberColumn("Preço (€)", format="%.2f€"),
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+            
+            # Seletor para abrires a ficha técnica de qualquer lead (mesmo as em quarentena)
+            escolha = st.selectbox("Analise específica:", 
+                                  options=df_final_view["Referencia"].unique(),
+                                  index=None,
+                                  placeholder="Escolha a Referência...")
+            
+            if escolha:
+                lead_selecionada = df_quarentena[df_quarentena["Referencia"] == escolha].iloc[0]
+                if st.button(f"🚀 Abrir Ficha de {escolha}"):
+                    st.session_state.selected_imovel = lead_selecionada.to_dict()
+                    st.session_state.page = "DETALHE"
+                    st.rerun()
+else:
+    # Se o URL não tiver o código, o Python não processa nada disto. 
+    # Para o cliente, esta parte do site nem sequer existe.
+    pass
 # ==========================================
 # 3. COMPONENTES VISUAIS (CARROSSEL)
 # ==========================================
