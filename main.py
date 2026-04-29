@@ -96,18 +96,19 @@ def render_carousel_fragment(df_data):
         st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 4. ESTILIZAÇÃO E LAYOUT (CSS)
+# 4. ESTILIZAÇÃO E LAYOUT (CSS CONSOLIDADO)
 # ==========================================
 fundo_marmore = get_base64("Background.svg")
+
 st.markdown(f"""
     <style>
-    .stApp {{ background-image: url("data:image/svg+xml;base64,{fundo_marmore}"); background-size: cover; background-attachment: fixed; }}
-    .main-protection-card {{ background-color: rgba(253, 250, 245, 0.99); padding: 25px; border-radius: 15px; border-left: 8px solid #bfa573; box-shadow: 0 15px 35px rgba(0,0,0,0.1) ; margin-bottom: 20px; }}
-    .preview-window {{ border: 2px dashed #bfa573; background-color: #ffffff; padding: 10px; border-radius: 12px; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; }}
-    /* ... Teu CSS restante ... */
-    </style>
-""", unsafe_allow_html=True)
+    .stApp {{
+        background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
+        background-size: cover;
+        background-attachment: fixed;
     }}
+    
+    /* Botões e Links */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
@@ -122,31 +123,15 @@ st.markdown(f"""
         display: flex !important;
         justify-content: center !important;
     }}
+    
     div.stButton > button:hover, div.stDownloadButton > button:hover, .stLinkButton > a:hover {{
         background-color: transparent !important;
         color: #1a1a1a !important;
         border-color: #bfa573 !important;
         transform: translateY(-1px) !important;
     }}
-    .service-box .action-link {{
-        display: inline-block; 
-        padding: 8px 16px; 
-        background-color: #eeeeee !important;
-        color: #bfa573 !important; 
-        border: 1px solid #d0d0d0;
-        text-decoration: none !important; 
-        border-radius: 8px; 
-        font-size: 11px; 
-        font-weight: bold;
-        margin-top: 10px; 
-        text-transform: uppercase; 
-        text-align: center;
-        transition: 0.3s;
-    }}
-    .service-box .action-link:hover {{
-        background-color: transparent !important;
-        border-color: #bfa573 !important;
-    }}
+
+    /* Estrutura de Cards */
     .main-protection-card {{
         background-color: rgba(253, 250, 245, 0.99);
         padding: 25px 35px 10px 35px;
@@ -155,6 +140,7 @@ st.markdown(f"""
         box-shadow: 0 15px 35px rgba(0,0,0,0.15);
         margin-bottom: 10px; 
     }}
+
     .white-solid-box {{
         background-color: #ffffff;
         padding: 20px;
@@ -163,6 +149,7 @@ st.markdown(f"""
         margin-bottom: 15px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.05);
     }}
+
     .preview-window {{
         border: 2px dashed #bfa573;
         background-color: #ffffff;
@@ -174,6 +161,8 @@ st.markdown(f"""
         min-height: 120px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
     }}
+
+    /* Serviços e Perfil */
     .service-box {{
         background-color: white;
         padding: 18px;
@@ -182,8 +171,10 @@ st.markdown(f"""
         margin-bottom: 15px;
         min-height: 155px;
     }}
+
     .service-title {{ color: #1a1a1a; font-weight: 800; font-size: 15px; margin-bottom: 5px; display: block; }}
     .service-desc {{ color: #555; font-size: 12.5px; line-height: 1.4; }}
+    
     .profile-frame {{
         width: 180px; height: 180px;
         border-radius: 50%; border: 4px solid #bfa573;
@@ -191,9 +182,7 @@ st.markdown(f"""
         background: white;
     }}
     .profile-frame img {{ width: 100%; height: 100%; object-fit: cover; }}
-    .cargo-text {{ color: #1a1a1a !important; font-weight: 700 !important; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; }}
-    .quote-style {{ font-style: italic; color: #bfa573; font-size: 15px; margin: 10px 0; border-left: 2px solid #bfa573; padding-left: 10px; }}
-    .bio-text {{ font-size: 14px; color: #333; line-height: 1.5; }}
+    
     .legal-footer-box {{
         font-size: 11px; color: #444; text-align: center; padding: 25px;
         background: rgba(253, 250, 245, 0.99); border-radius: 10px;
