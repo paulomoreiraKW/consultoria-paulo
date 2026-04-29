@@ -19,10 +19,10 @@ if "last_update" not in st.session_state: st.session_state.last_update = time.ti
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
 # ==========================================
-# 2. FUNÇÕES AUXILIARES (DEFINIR PRIMEIRO)
+# 2. FUNÇÕES AUXILIARES
 # ==========================================
 def get_base64(bin_file):
-    """Converte ficheiros para base64 para uso no CSS (Backgrounds/Imagens)"""
+    """Converte ficheiros para base64 para uso no CSS"""
     if os.path.exists(bin_file):
         with open(bin_file, 'rb') as f:
             return base64.b64encode(f.read()).decode()
@@ -43,90 +43,48 @@ def safe_float(value):
 def format_pt(n):
     return f"{n:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
+def enviar_para_sheet(payload):
+    SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec"
+    assinatura_dados = hashlib.md5(str(payload).encode()).hexdigest()
+    if "ultima_assinatura" in st.session_state:
+        if st.session_state.ultima_assinatura == assinatura_dados:
+            return False            
+    try:
+        res = requests.post(SCRIPT_URL, json=payload, timeout=10)
+        if res.status_code == 200:
+            st.session_state.ultima_assinatura = assinatura_dados
+            return True
+    except:
+        return False
+    return False
+
+# ==========================================
+# 3. CARREGAMENTO DE DADOS
+# ==========================================
+SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
+URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
+
 @st.cache_data(ttl=3600)
 def load_data(url):
     try:
         data = pd.read_csv(url)
-        return data.fillna("")
+        data = data.fillna("")
+        # Filtros de Qualidade P.M.M.
+        if "Score_PM5D" in data.columns:
+            data = data[pd.to_numeric(data["Score_PM5D"], errors="coerce").fillna(0) >= 3]
+        if "Status_Scraping" in data.columns:
+            data = data[data["Status_Scraping"].str.upper().isin(["OK", "APROVADO", "PUBLICAR"])]
+        if "Decisao" in data.columns:
+            data = data[data["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])]
+        return data.reset_index(drop=True)
     except:
         return pd.DataFrame()
 
-# ==========================================
-# 3. CONEXÃO AO GOOGLE SHEETS
-# ==========================================
-SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
-URL_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
-URL_ACTIVOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=ACTIVOS"
-URL_CONFIG = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=CONFIG_MERCADO"
+df = load_data(URL)
 
 # ==========================================
-# 4. PROCESSAMENTO DAS LEADS (CÉREBRO 2026)
+# 4. DESIGN E IDENTIDADE VISUAL (CSS)
 # ==========================================
-def processar_leads_inteligentes(df, df_conf):
-    if df.empty: return df
-    
-    df["Area_m2"] = df["Area_m2"].apply(safe_float)
-    df["Preco_Listagem"] = df["Preco_Listagem"].apply(safe_float)
-
-    # Nota: calcular_score no utils.py agora recebe df_conf como último argumento
-    df["Score_Calculado"] = df.apply(
-        lambda row: calcular_score(
-            row.get("Titulo") or "",
-            row["Preco_Listagem"],
-            row.get("Localidade", ""),
-            row["Area_m2"],
-            df_conf
-        ),
-        axis=1
-    )
-    df["Zona_Dinamica"] = df["Localidade"].apply(get_zona_label)
-    return df
-
-# CARREGAMENTO EFETIVO
-df_bruto = load_data(URL_LEADS)
-df_config = load_data(URL_CONFIG)
-df_leads = processar_leads_inteligentes(df_bruto, df_config)
-
-# ==========================================
-# 5. INTERFACE (CSS E LAYOUT)
-# ==========================================
-fundo_marmore = get_base64("Background.svg") # Agora a função já foi definida acima!
-
-st.markdown(f"""
-    <style>
-    .stApp {{
-        background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
-        background-size: cover;
-        background-attachment: fixed;
-    }}
-    /* ... (Resto do teu CSS de botões e cards) ... */
-    </style>
-""", unsafe_allow_html=True)
-
-st.subheader("🔬 Painel de Análise de Novas Leads")
-if st.checkbox("🔬 Ver análise detalhada do cérebro"):
-    if not df_leads.empty:
-        st.write(f"O sistema analisou {len(df_leads)} imóveis em tempo real.")
-        colunas_ver = [c for c in ["Referencia", "Localidade", "Preco_Listagem", "Area_m2", "Score_Calculado", "Zona_Dinamica"] if c in df_leads.columns]
-        st.dataframe(df_leads[colunas_ver])
-    else:
-        st.warning("Sem leads para analisar no momento.")
-
-data = df_leads.copy()
-if not data.empty:
-    if "Score_PM5D" in data.columns:
-        data["Score_PM5D"] = pd.to_numeric(data["Score_PM5D"], errors="coerce").fillna(0)
-        data["Score_PM5D"] = data["Score_PM5D"].replace(0, pd.NA).fillna(data["Score_Calculado"])
-    else:
-        data["Score_PM5D"] = data["Score_Calculado"]
-
-    data = data[data["Score_PM5D"] >= 1]
-    
-    if "Decisao" in data.columns:
-         data = data[(data["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK", ""])) | (data["Decisao"] == "")]
-
-    data = data.sort_values(by="Score_PM5D", ascending=False).reset_index(drop=True)
-
 fundo_marmore = get_base64("Background.svg")
 
 st.markdown(f"""
@@ -230,13 +188,13 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
+# ==========================================
+# 5. COMPONENTES DINÂMICOS
+# ==========================================
 @st.fragment(run_every=3)  
 def render_carousel_fragment(df_data):
     if not df_data.empty:
-        # Inicializa o índice se não existir
-        if "idx" not in st.session_state:
-            st.session_state.idx = 0
-            
+        if "idx" not in st.session_state: st.session_state.idx = 0
         row = df_data.iloc[st.session_state.idx]
         
         st.markdown(f"""
@@ -245,9 +203,11 @@ def render_carousel_fragment(df_data):
             <div style="font-size:12px;"><b>{row.get('Tipo')} | {row.get('Localidade')}</b></div>
         </div>
         """, unsafe_allow_html=True)
-
         st.session_state.idx = (st.session_state.idx + 1) % len(df_data)
 
+# ==========================================
+# 6. HEADER E NAVEGAÇÃO PRINCIPAL
+# ==========================================
 if os.path.exists("Paulo Moreira Consultoria & Gestão.png"):
     st.image("Paulo Moreira Consultoria & Gestão.png", use_container_width=True)
 
@@ -258,11 +218,15 @@ with c3: st.link_button("📲 App Pessoal KW", "https://app.kw.com/KWNVLOD5AW4")
 
 st.write("<br>", unsafe_allow_html=True)
 
+# ==========================================
+# 7. PÁGINA: LOJA / GALERIA
+# ==========================================
 if st.session_state.page == "LOJA":
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
     if st.button("← Voltar ao Perfil"):
         st.session_state.page = "HOME"
         st.rerun()
+    
     if df.empty:
         st.warning("A carregar ativos...")
     else:
@@ -291,12 +255,16 @@ if st.session_state.page == "LOJA":
                     st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
+# ==========================================
+# 8. PÁGINA: DETALHE E SIMULADOR 5D
+# ==========================================
 elif st.session_state.page == "DETALHE":
     row = st.session_state.selected_imovel
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
     if st.button("← Voltar à Galeria"):
         st.session_state.page = "LOJA"
         st.rerun()
+    
     if row:
         ref = row.get("Referencia", "N/A")
         preco_lista = safe_float(row.get("Preco_Listagem", 0))
@@ -314,126 +282,61 @@ elif st.session_state.page == "DETALHE":
             </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("""
-            <style>
-                .titulo-simulador {
-                    text-align: center; font-size: 16px; color: #1a1a1a; font-weight: bold;
-                    letter-spacing: 1px; border-bottom: 1px solid #eee; padding-bottom: 5px;
-                    margin-bottom: 10px; text-transform: uppercase;
-                }
-            </style>
-            <div style="background-color: #ffffff; padding: 10px 25px; border-radius: 12px; border: 1px solid #bfa573; 
-                        margin: 5px auto; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                <p class="titulo-simulador">🛠️ Simulador de Investimento</p>
-        """, unsafe_allow_html=True)
+        st.markdown('<div style="background-color: #ffffff; padding: 10px 25px; border-radius: 12px; border: 1px solid #bfa573; margin: 5px auto; max-width: 600px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);"><p style="text-align: center; font-size: 16px; color: #1a1a1a; font-weight: bold; letter-spacing: 1px; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; text-transform: uppercase;">🛠️ Simulador de Investimento</p>', unsafe_allow_html=True)
         
         col_sim1, col_sim2 = st.columns(2)
         with col_sim1:
             novo_capex = st.number_input("**Estimativa de Obra (€)**", value=capex_base, step=1000.0, format="%.2f")
-        
         with col_sim2:
             valor_sugerido = exit_base if exit_base > 0 else 0.0
             novo_exit = st.number_input("**Preço de Venda Alvo (€)**", value=valor_sugerido, step=1000.0, format="%.2f")
-        
         st.markdown("</div>", unsafe_allow_html=True)
 
         if exit_base == 0:
-            st.markdown(f"""
-                <div style="
-                    background: rgba(255, 255, 255, 0.6); 
-                    backdrop-filter: blur(10px); 
-                    -webkit-backdrop-filter: blur(10px);
-                    border: 1px solid #bfa573; 
-                    border-radius: 12px; 
-                    padding: 15px; 
-                    margin: 15px auto; 
-                    max-width: 600px; 
-                    text-align: center;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-                ">
-                    <span style="color: #1a1a1a; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">
-                        🔍 Análise de Viabilidade em Curso
-                    </span><br>
-                    <div style="width: 30px; height: 1px; background: #bfa573; margin: 8px auto;"></div>
-                    <span style="color: #555; font-size: 11px; font-family: 'Inter', sans-serif;">
-                        Imóvel sob análise técnica. Os valores de projecção serão actualizados após validação de mercado e métricas 5D.
-                    </span>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown('<div style="background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); border: 1px solid #bfa573; border-radius: 12px; padding: 15px; margin: 15px auto; max-width: 600px; text-align: center;"><span style="color: #1a1a1a; font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;">🔍 Análise de Viabilidade em Curso</span><br><div style="width: 30px; height: 1px; background: #bfa573; margin: 8px auto;"></div><span style="color: #555; font-size: 11px;">Imóvel sob análise técnica. Valores atualizados após validação 5D.</span></div>', unsafe_allow_html=True)
 
         foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
-        
-        if novo_exit == 0:
-            lucro_estimado = 0.0
-        else:
-            lucro_estimado = novo_exit - invest_total - (novo_capex - capex_base)
+        lucro_estimado = (novo_exit - invest_total - (novo_capex - capex_base)) if novo_exit > 0 else 0.0
         
         st.markdown(f"""
             <div style="max-width: 600px; margin: 10px auto; display: flex; justify-content: center;">
-                <div style="text-align:center; padding: 25px; 
-                            background-color: rgba(255, 255, 255, 0.4); 
-                            -webkit-backdrop-filter: blur(10px); 
-                            backdrop-filter: blur(10px); 
-                            border-radius: 12px; 
-                            border: 1px solid rgba(255, 255, 255, 0.2); 
-                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255,255,255,0.1); 
-                            width: 100%; position: relative; overflow: hidden;">
-                    <span style="color:#1a1a1a; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: bold;">
-                        Projeção de Lucro Flip
-                    </span><br>
-                    <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0px 0px 5px rgba(255,255,255,0.8);">
-                        {lucro_estimado:,.2f}€
-                    </span>
+                <div style="text-align:center; padding: 25px; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); width: 100%;">
+                    <span style="color:#1a1a1a; font-size:12px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Projeção de Lucro Flip</span><br>
+                    <span style="color:#bfa573; font-size:42px; font-weight:bold;">{lucro_estimado:,.2f}€</span>
                     <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.4); margin:15px auto;"></div>
-                    <p style="color:#000; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; font-weight: bold; opacity: 0.9;">
-                        Cálculo baseado na Metodologia 5D P.M.M.
-                    </p>
+                    <p style="color:#000; font-size:10px; font-weight: bold;">Cálculo baseado na Metodologia 5D P.M.M.</p>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
+        # Formulário de Lead
         lead_contacto = st.text_input("Para mais detalhes, preencha com:", placeholder="Seu Nome ou Email...")
-
         if st.button("🔓 Solicitar Relatório Completo", key="btn_desbloquear"):
             if lead_contacto:
                 e_email = re.match(r"[^@]+@[^@]+\.[^@]+", lead_contacto)
                 e_telefone = len(re.sub(r"\D", "", lead_contacto)) >= 9
-
                 if e_email or e_telefone:
                     roi_simulado = (lucro_estimado / invest_total * 100) if invest_total > 0 else 0
-                    descritivo_adn = f"Simulação: ROI de {roi_simulado:.2f}%."
-                    if foi_simulado:
-                        descritivo_adn += " (Valores ajustados pelo utilizador)"
+                    descritivo_adn = f"Simulação: ROI de {roi_simulado:.2f}%." + (" (Ajustado)" if foi_simulado else "")
                     
                     dados_relatorio = {
-                        "relatorio_ref": ref,
-                        "relatorio_lead": lead_contacto,
-                        "relatorio_score": str(row.get("Score_PM5D", "3")),
-                        "relatorio_zona": row.get("Localidade", "N/A"),
-                        "relatorio_lucro": format_pt(lucro_estimado) + "€",
-                        "relatorio_capex": format_pt(novo_capex) + "€",
-                        "relatorio_exit": format_pt(novo_exit) + "€",
-                        "relatorio_invest": format_pt(invest_total) + "€",
-                        "relatorio_adn": descritivo_adn,
-                        "simulou": foi_simulado,
-                        "relatorio_link": row.get("Link_Fonte", "")  # Esta linha agora tem destino na Sheet
+                        "relatorio_ref": ref, "relatorio_lead": lead_contacto, "relatorio_score": str(row.get("Score_PM5D", "3")),
+                        "relatorio_zona": row.get("Localidade", "N/A"), "relatorio_lucro": format_pt(lucro_estimado) + "€",
+                        "relatorio_capex": format_pt(novo_capex) + "€", "relatorio_exit": format_pt(novo_exit) + "€",
+                        "relatorio_invest": format_pt(invest_total) + "€", "relatorio_adn": descritivo_adn,
+                        "simulou": foi_simulado, "relatorio_link": row.get("Link_Fonte", "")
                     }
-
                     enviar_para_sheet(dados_relatorio)
-
-                    if e_email:
-                        st.success(f"✅ Dossier técnico preparado para {lead_contacto}.")
-                        st.info("O rascunho detalhado foi gerado com sucesso.")
-                    
+                    if e_email: st.success(f"✅ Dossier preparado para {lead_contacto}.")
                     if e_telefone:
-                        st.success("✅ Validação concluída. A abrir WhatsApp...")
-                        msg_wa = f"Olá Paulo, Verifiquei os resultados {ref}. Nome: {lead_contacto}. Projeção: {lucro_estimado:,.2f}€."
-                        url_wa = f"https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}"
-                        st.components.v1.html(f"<script>window.open('{url_wa}')</script>", height=0)
-                else:
-                   st.error("Por favor, insira um e-mail ou contacto telefónico válido.")
-            else:
-                st.error("A identificação é necessária para aceder ao dossier técnico.")
+                        msg_wa = f"Olá Paulo, Verifiquei {ref}. Nome: {lead_contacto}. Projeção: {lucro_estimado:,.2f}€."
+                        st.components.v1.html(f"<script>window.open('https://wa.me/351911995695?text={msg_wa.replace(' ', '%20')}')</script>", height=0)
+                else: st.error("Insira um contacto válido.")
+            else: st.error("Identificação necessária.")
+
+# ==========================================
+# 9. PÁGINA: HOME / PERFIL
+# ==========================================
 else:
     st.markdown('<div class="main-protection-card">', unsafe_allow_html=True)
     col_l, col_r = st.columns([1, 1.8])
@@ -449,43 +352,27 @@ else:
             <div class="cargo-text">Consultor Imobiliário</div>
             <h1 style="color:#1a1a1a; font-size:32px; font-weight:300; margin:5px 0;">Paulo Moreira</h1>
             <div class="quote-style">"O sucesso de uma transação imobiliária depende de estratégia, não de sorte."</div>
-            <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
+            <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico de excelência.</div>
         </div>""", unsafe_allow_html=True)
-
         if not df.empty:
             render_carousel_fragment(df)
-            st.write("")
             if st.button("📂 VER TODOS OS IMÓVEIS DISPONÍVEIS", use_container_width=True):
                 st.session_state.page = "LOJA"
-                st.session_state.idx = 0
                 st.rerun()
-        else:
-            st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
+        else: st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
+# ==========================================
+# 10. RODAPÉ DE SERVIÇOS E LEGAL
+# ==========================================
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
 m1, m2 = st.columns(2)
 with m1:
-    st.markdown(f"""<div class="service-box">
-        <span class="service-title">📈 Estudo de Mercado</span>
-        <span class="service-desc">Análise profunda baseada em dados reais e comparativos para definir o valor certo de venda.</span><br>
-        <a href="https://www.kwportugal.pt/pt/property-valuation" class="action-link">Avaliar Imóvel</a>
-    </div>""", unsafe_allow_html=True)
-    st.markdown("""<div class="service-box">
-        <span class="service-title">⚖️ Apoio Jurídico</span>
-        <span class="service-desc">Segurança total na documentação, elaboração de CPCV e acompanhamento rigoroso até à escritura.</span>
-    </div>""", unsafe_allow_html=True)
-
+    st.markdown('<div class="service-box"><span class="service-title">📈 Estudo de Mercado</span><span class="service-desc">Análise profunda baseada em dados reais.</span><br><a href="https://www.kwportugal.pt/pt/property-valuation" class="action-link">Avaliar Imóvel</a></div>', unsafe_allow_html=True)
+    st.markdown('<div class="service-box"><span class="service-title">⚖️ Apoio Jurídico</span><span class="service-desc">Segurança total na documentação e CPCV.</span></div>', unsafe_allow_html=True)
 with m2:
-    st.markdown("""<div class="service-box">
-        <span class="service-title">📣 Plano de Marketing</span>
-        <span class="service-desc">Exposição premium em mais de 100 portais nacionais e internacionais com fotografia profissional.</span>
-    </div>""", unsafe_allow_html=True)
-    st.markdown(f"""<div class="service-box">
-        <span class="service-title">🏦 Gestão de Crédito</span>
-        <span class="service-desc">Intermediação de crédito certificada para encontrar as melhores condições de financiamento.</span><br>
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform" class="action-link">Simular Crédito</a>
-    </div>""", unsafe_allow_html=True)
+    st.markdown('<div class="service-box"><span class="service-title">📣 Plano de Marketing</span><span class="service-desc">Exposição premium em mais de 100 portais.</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="service-box"><span class="service-title">🏦 Gestão de Crédito</span><span class="service-desc">Intermediação certificada.</span><br><a href="https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform" class="action-link">Simular Crédito</a></div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("<br>", unsafe_allow_html=True)
@@ -496,16 +383,11 @@ with bc: st.link_button("🟢 Whatsapp", "https://wa.me/351911995695")
 
 st.write("<br>", unsafe_allow_html=True)
 f1, f2, f3 = st.columns([1, 1, 1])
-with f1:
+with f1: 
     if os.path.exists("P.M.M..png"): st.image("P.M.M..png", width=100)
-with f2:
+with f2: 
     if os.path.exists("REAL ESTATE.svg"): st.image("REAL ESTATE.svg", width=110)
-with f3:
+with f3: 
     if os.path.exists("area_feira.png"): st.image("area_feira.png", width=110)
 
-st.markdown("""<div class="legal-footer-box">
-    <b>Resumo Plural, Lda.</b> - Licença AMI 21331 - Pessoa Coletiva 517 033 224 <br>
-    Morada comercial: Rua Estrada Nacional, nº 1190, 1200 – Zona Ind. do Roligo, 4520-115 Espargo <br>
-    Tel.: 256 313 054 | kwareafeira@kwportugal.pt | www.kwportugal.pt | <br>
-    <b>Cada Market Center é de gestão independente</b>
-</div>""", unsafe_allow_html=True)
+st.markdown('<div class="legal-footer-box"><b>Resumo Plural, Lda.</b> - AMI 21331 - Contribuinte 517 033 224 <br>Rua Estrada Nacional, nº 1190, 1200 – Espargo <br><b>Cada Market Center é de gestão independente</b></div>', unsafe_allow_html=True)
