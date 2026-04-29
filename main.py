@@ -210,15 +210,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 # --- AGORA SIM, O PYTHON CONTINUA DAQUI ---
 
-    .white-solid-box {{
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        border-bottom: 3px solid #bfa573;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }}
-
     .preview-window {{
         border: 2px dashed #bfa573;
         background-color: #ffffff;
