@@ -145,9 +145,10 @@ def render_carousel_fragment(df_data):
 # ==========================================
 fundo_marmore = get_base64("Background.svg")
 
+# --- TUDO DENTRO DE UM ÚNICO BLOCO PARA NÃO DAR ERRO ---
 st.markdown(f"""
     <style>
-    /* 1. O Contentor com a Imagem Real */
+    /* 1. Fundo com Imagem e Blur */
     .stApp {{
         background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
         background-size: cover;
@@ -155,25 +156,35 @@ st.markdown(f"""
         background-position: center;
     }}
     
-    /* 2. O Filtro Invisível (SÓ BLUR) */
     .stApp::before {{
         content: "";
         position: fixed;
         top: 0; left: 0; 
         width: 100vw; height: 100vh;
-        /* Sem cor, apenas desfoque */
         backdrop-filter: blur(3px); 
         -webkit-backdrop-filter: blur(3px);
         z-index: -1;
     }}
 
-    /* 3. Garantir que as tuas caixas brancas e botões têm força */
-    .main-protection-card, .white-solid-box, .service-box {{
-        background-color: #ffffff !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    /* 2. Estrutura de Cards (Onde dava o erro) */
+    .main-protection-card {{
+        background-color: rgba(253, 250, 245, 0.99) !important;
+        padding: 25px 35px 10px 35px;
+        border-radius: 15px;
+        border-left: 8px solid #bfa573;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        margin-bottom: 10px;
     }}
 
-    /* 4. Botões e Links (Agora dentro do bloco Style para não dar erro) */
+    /* 3. Caixas de Serviço e Brancos Solidos */
+    .white-solid-box, .service-box {{
+        background-color: #ffffff !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+        border-radius: 12px;
+        padding: 20px;
+    }}
+
+    /* 4. Botões e Links */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
@@ -191,22 +202,13 @@ st.markdown(f"""
     
     div.stButton > button:hover, div.stDownloadButton > button:hover, .stLinkButton > a:hover {{
         background-color: transparent !important;
-        color: #bfa573 !important; /* Destaque em dourado no hover */
+        color: #bfa573 !important;
         border-color: #bfa573 !important;
         transform: translateY(-1px) !important;
     }}
     </style>
 """, unsafe_allow_html=True)
-
-    /* Estrutura de Cards */
-    .main-protection-card {{
-        background-color: rgba(253, 250, 245, 0.99);
-        padding: 25px 35px 10px 35px;
-        border-radius: 15px;
-        border-left: 8px solid #bfa573;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        margin-bottom: 10px; 
-    }}
+# --- AGORA SIM, O PYTHON CONTINUA DAQUI ---
 
     .white-solid-box {{
         background-color: #ffffff;
