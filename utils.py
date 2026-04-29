@@ -35,35 +35,45 @@ def get_zona_label(localidade):
     return f"{label} (+Litoral)" if bonus else label
 
 def calcular_score(titulo, preco, localidade, area, df_config=None):
-    """
-    Mantém o nome da função para o main.py não partir, 
-    mas usa a nova lógica financeira.
-    """
     if preco <= 0 or area <= 0: return 1
-    if df_config is None or df_config.empty: return 3 # Fallback se não carregar config
+    if df_config is None or df_config.empty: return 3 
     
     zona_id, bonus_mar = identificar_zona_e_ajuste(localidade)
     
     try:
-        # Tenta buscar a linha da zona no Sheets (indexada pela coluna 'Zona')
         conf = df_config.set_index('Zona').loc[zona_id]
-        
         ref_venda = float(conf['Ref_Venda_Pronto'])
+        
         if bonus_mar:
-            ref_venda *= 1.15 # Bónus Automático Litoral
+            ref_venda *= 1.15 
             
-        # Limpeza de Margem de Venda (1.0615)
         venda_liquida = ref_venda / 1.0615
         
-        # Teto para Recuperar (SOP MASTER)
-        teto_compra = (venda_liquida - float(conf['Custo_Obra'])) / (1 + float(conf['Margem_Flip']))
+        # --- FUNDAMENTAÇÃO TÉCNICA DE ATIVOS ---
+        # Identificamos se é Terreno para ajustar a incidência do Custo de Obra
+        nome_norm = normalizar(titulo)
+        is_terreno = any(w in nome_norm for w in ["terreno", "lote", "parcela", "urbanizavel"])
+        
+        custo_obra_base = float(conf['Custo_Obra'])
+        
+        if is_terreno:
+            # Para terrenos, o "Custo de Obra" na folha CONFIG representa a construção futura.
+            # No cálculo de teto de compra imediato, aplicamos apenas custos de infraestrutura/licenciamento (estimados em 15%)
+            # para não canibalizar a viabilidade do solo.
+            custo_incidente = custo_obra_base * 0.15
+        else:
+            custo_incidente = custo_obra_base
+
+        # Cálculo do Teto de Compra (Métrica Real de Investimento)
+        teto_compra = (venda_liquida - custo_incidente) / (1 + float(conf['Margem_Flip']))
         
         valor_m2_anuncio = preco / area
         ratio = valor_m2_anuncio / teto_compra
         
-        if ratio <= 1.0: return 5
-        if ratio <= 1.15: return 4
-        if ratio <= 1.30: return 3
-        return 2
+        # --- ESCALA DE SCORE 5D (ZONAS DETALHADAS) ---
+        if ratio <= 1.05: return 5     # Ativo em preço de oportunidade técnica
+        if ratio <= 1.25: return 4     # Ativo alinhado com margens de segurança
+        if ratio <= 1.50: return 3     # Preço de mercado (Sem margem de Flip imediata)
+        return 2                       # Ativo sobrevalorizado perante a métrica 5D
     except:
         return 2
