@@ -147,22 +147,26 @@ fundo_marmore = get_base64("Background.svg")
 
 st.markdown(f"""
     <style>
+    /* 1. O Contentor Principal */
     .stApp {{
         background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
         background-size: cover;
         background-attachment: fixed;
-        position: relative; /* Necessário para o efeito de fundo */
+        background-position: center;
+        z-index: 0;
     }}
     
-    /* BLOCO NOVO: O efeito de "Vidro" sugerido pela tua amiga */
+    /* 2. A Camada de "Vidro" (O Filtro) */
     .stApp::before {{
         content: "";
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(255, 255, 255, 0.75); /* Opacidade */
-        backdrop-filter: blur(3px); /* Desfoque */
-        z-index: -1;
-    }}
+        position: fixed; /* Fixa a camada para cobrir todo o ecrã */
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.7); /* Cor branca com 70% de transparência */
+        backdrop-filter: blur(5px); /* O desfoque que dá o ar premium */
+        -webkit-backdrop-filter: blur(5px);
     
     /* Botões e Links */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
