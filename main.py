@@ -6,26 +6,23 @@ import time
 import requests
 import re
 import hashlib
+from utils import calcular_score, get_zona_label # Importa do teu novo utils.py
 
-if "page" not in st.session_state:
-    st.session_state.page = "HOME"
-
-if "selected_imovel" not in st.session_state:
-    st.session_state.selected_imovel = None
-
-if "idx" not in st.session_state:
-    st.session_state.idx = 0
-
-if "last_update" not in st.session_state:
-    st.session_state.last_update = time.time()
+# 1. CONFIGURAÇÕES DE SESSÃO E PÁGINA
+if "page" not in st.session_state: st.session_state.page = "HOME"
+if "idx" not in st.session_state: st.session_state.idx = 0
 
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
-def get_base64(bin_file):
-    if os.path.exists(bin_file):
-        with open(bin_file, 'rb') as f:
-            return base64.b64encode(f.read()).decode()
-    return ""
+# 2. FUNÇÕES DE CARREGAMENTO (Definir ANTES de usar)
+@st.cache_data(ttl=3600)
+def load_data(url):
+    try:
+        data = pd.read_csv(url)
+        return data.fillna("")
+    except Exception as e:
+        st.error(f"Erro ao carregar dados: {e}")
+        return pd.DataFrame()
 
 def safe_float(value):
     if value is None or value == "": return 0.0
@@ -39,82 +36,38 @@ def safe_float(value):
     except:
         return 0.0
 
-def format_pt(n):
-    return f"{n:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-from utils import calcular_score, get_zona_label
-
-def processar_leads_inteligentes(df):
-    if df.empty:
-        return df
-    
-    df["Area_m2"] = df["Area_m2"].apply(safe_float)
-    df["Preco_Listagem"] = df["Preco_Listagem"].apply(safe_float)
-
-    df["Score_Calculado"] = df.apply(
-        lambda row: calcular_score(
-            row.get("Titulo") or row.get("Tipo") or "",
-            row["Preco_Listagem"],
-            row.get("Localidade", ""),
-            row["Area_m2"]
-        ),
-        axis=1
-    )
-    
-    df["Zona_Dinamica"] = df["Localidade"].apply(get_zona_label)
-    
-    return df
-
-def enviar_para_sheet(payload):
-    SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec"
-    assinatura_dados = hashlib.md5(str(payload).encode()).hexdigest()
-    if "ultima_assinatura" in st.session_state:
-        if st.session_state.ultima_assinatura == assinatura_dados:
-            return False            
-    try:
-        res = requests.post(SCRIPT_URL, json=payload, timeout=10)
-        if res.status_code == 200:
-            st.session_state.ultima_assinatura = assinatura_dados
-            return True
-    except:
-        return False
-    return False
-
+# 3. ENDEREÇOS DO GOOGLE SHEETS
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
 URL_ACTIVOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=ACTIVOS"
 URL_CONFIG = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=CONFIG_MERCADO"
 
-@st.cache_data(ttl=3600)
-def load_config(url):
-    try:
-        return pd.read_csv(url)
-    except:
-        return pd.DataFrame()
-
-# No fluxo principal:
-df_bruto = load_data(URL_LEADS)
-df_config = load_config(URL_CONFIG) # <--- NOVO
-
-# Altera a chamada do processamento:
+# 4. PROCESSAMENTO DAS LEADS COM O "CÉREBRO" NOVO
 def processar_leads_inteligentes(df, df_conf):
-    if df.empty: return df
+    if df.empty or df_conf.empty:
+        return df
+    
     df["Area_m2"] = df["Area_m2"].apply(safe_float)
     df["Preco_Listagem"] = df["Preco_Listagem"].apply(safe_float)
 
+    # O Score agora recebe a tabela de configuração do Sheets
     df["Score_Calculado"] = df.apply(
         lambda row: calcular_score(
             row.get("Titulo") or "",
             row["Preco_Listagem"],
             row.get("Localidade", ""),
             row["Area_m2"],
-            df_conf # <--- PASSA A CONFIG AQUI
+            df_conf
         ),
         axis=1
     )
+    
     df["Zona_Dinamica"] = df["Localidade"].apply(get_zona_label)
     return df
 
+# 5. EXECUÇÃO DO CARREGAMENTO
+df_bruto = load_data(URL_LEADS)
+df_config = load_data(URL_CONFIG) # Carrega a tua nova aba de preços
 df_leads = processar_leads_inteligentes(df_bruto, df_config)
 
 st.subheader("🔬 Painel de Análise de Novas Leads")
