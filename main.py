@@ -396,31 +396,33 @@ else: # HOME PAGE
 # NOVO BLOCO CONSOLIDADO (SERVIÇOS + CONTACTOS + RODAPÉ)
 # ==========================================
 
-# --- CSS REFINADO: FOCO NO DETALHE PREMIUM ---
+# --- CSS AJUSTADO: ABRIR O ESPECTRO DO FUNDO ---
 st.markdown("""
     <style>
         .action-link {
             display: inline-block !important;
             margin-top: 15px !important;
             padding: 10px 25px !important;
-            background-color: #1a1a1a !important; /* Fundo Negro Profundo */
-            color: #bfa573 !important; /* TEXTO DOURADO KW */
+            /* Alterado de #1a1a1a para um antracite mais aberto e sofisticado */
+            background-color: #2b2b2b !important; 
+            color: #bfa573 !important; 
             text-decoration: none !important;
-            border-radius: 4px !important; /* Cantos mais retos = mais sério */
-            font-size: 10px !important; /* Ligeiramente menor para elegância */
+            border-radius: 4px !important;
+            font-size: 10px !important;
             font-weight: 700 !important;
             text-transform: uppercase !important;
-            letter-spacing: 1.5px !important; /* Espaçamento de luxo */
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-            border: 1px solid #bfa573 !important; /* Borda Dourada Fina */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            letter-spacing: 1.5px !important;
+            transition: all 0.4s ease !important;
+            border: 1px solid #bfa573 !important;
+            text-align: center !important;
         }
 
         .action-link:hover {
-            background-color: #bfa573 !important; /* Inverte fundo para Dourado */
-            color: #1a1a1a !important; /* Texto passa a Preto no hover */
-            box-shadow: 0 5px 15px rgba(191, 165, 115, 0.4) !important; /* Brilho dourado */
-            transform: translateY(-2px) !important; /* Elevação premium */
+            /* No hover ele ganha brilho, mantendo a inversão */
+            background-color: #bfa573 !important;
+            color: #2b2b2b !important;
+            box-shadow: 0 5px 15px rgba(191, 165, 115, 0.3) !important;
+            transform: translateY(-2px) !important;
         }
     </style>
 """, unsafe_allow_html=True)
