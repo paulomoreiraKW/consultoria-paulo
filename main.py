@@ -71,26 +71,51 @@ def carregar_sistema_completo():
 # Ativação
 df_quarentena, df = carregar_sistema_completo()
 
-# --- ZONA DE QUARENTENA (Radar Total do Paulo) ---
-with st.expander("🔬 Radar de Metodologia 5D (Análise Geral)"):
+# --- ZONA DE QUARENTENA (Radar Total em Tabela) ---
+with st.expander("🔬 Radar de Metodologia 5D (Tabela de Auditoria)"):
     if not df_quarentena.empty:
-        # Removido o filtro de leads_novas para mostrar TUDO o que está no sistema
-        for idx, lead in df_quarentena.iterrows():
-            # Criamos uma etiqueta visual para saberes o que já está na Loja
-            status = "✅ EM LOJA" if lead['Decisao'].upper() in ["APROVADO", "SIM", "OK"] else "⏳ QUARENTENA"
-            
-            col_a, col_b = st.columns([3, 1])
-            with col_a:
-                st.markdown(f"**{lead['Titulo']}** ({lead['Localidade']})")
-                st.caption(f"Status: {status} | Zona: {lead['Zona_Dinamica']} | Preço/m2: {lead['Preco_Listagem']/lead['Area_m2']:.2f}€")
-            with col_b:
-                st.metric("Score 5D", f"{lead['Score_Calculado']}/5")
-            
-            if st.button(f"🔍 Ver Análise Técnica: {lead['Referencia']}", key=f"draft_{idx}"):
-                st.session_state.selected_imovel = lead.to_dict()
+        # 1. Preparar o DataFrame para visualização (limpar colunas desnecessárias)
+        df_view = df_quarentena.copy()
+        
+        # Criar a coluna de Status legível
+        df_view["Status"] = df_view["Decisao"].apply(
+            lambda x: "✅ LOJA" if str(x).upper() in ["APROVADO", "SIM", "OK"] else "⏳ QUARENTENA"
+        )
+        
+        # Calcular Preço/m2 para a tabela
+        df_view["P_m2"] = (df_view["Preco_Listagem"] / df_view["Area_m2"]).round(2)
+        
+        # Selecionar e ordenar colunas para o Paulo ler rápido
+        colunas_foco = ["Status", "Score_Calculado", "Titulo", "Localidade", "Zona_Dinamica", "Preco_Listagem", "Area_m2", "P_m2", "Referencia"]
+        df_final_view = df_view[colunas_foco].sort_values(by="Score_Calculado", ascending=False)
+
+        # 2. Mostrar a Tabela Interativa
+        st.dataframe(
+            df_final_view,
+            column_config={
+                "Score_Calculado": st.column_config.NumberColumn("⭐ Score", format="%d/5"),
+                "Preco_Listagem": st.column_config.NumberColumn("Preço (€)", format="%.2f€"),
+                "P_m2": st.column_config.NumberColumn("€/m2", format="%.2f€"),
+                "Status": st.column_config.TextColumn("Estado"),
+            },
+            hide_index=True,
+            use_container_width=True
+        )
+        
+        # 3. Seletor para abrir o detalhe (Já que em tabelas não dá para pôr botões em cada linha facilmente)
+        st.write("<br>", unsafe_allow_html=True)
+        escolha = st.selectbox("🎯 Selecione uma Referência para abrir Análise Detalhada:", 
+                              options=df_final_view["Referencia"].unique(),
+                              index=None,
+                              placeholder="Escolha o imóvel...")
+        
+        if escolha:
+            lead_selecionada = df_quarentena[df_quarentena["Referencia"] == escolha].iloc[0]
+            if st.button(f"🚀 Abrir Ficha de {escolha}"):
+                st.session_state.selected_imovel = lead_selecionada.to_dict()
                 st.session_state.page = "DETALHE"
                 st.rerun()
-            st.markdown("---") # Linha separadora entre leads
+                
     else:
         st.warning("Nenhum dado encontrado no separador LEADS.")
 # ==========================================
