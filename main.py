@@ -396,16 +396,19 @@ else: # HOME PAGE
 # NOVO BLOCO CONSOLIDADO (SERVIÇOS + CONTACTOS + RODAPÉ)
 # ==========================================
 
-# --- CSS AJUSTADO: ABRIR O ESPECTRO DO FUNDO ---
+# --- CSS REFINADO: EFEITO VIDRO ANTRACITE (OPEN SPECTRUM) ---
 st.markdown("""
     <style>
         .action-link {
             display: inline-block !important;
             margin-top: 15px !important;
             padding: 10px 25px !important;
-            /* Alterado de #1a1a1a para um antracite mais aberto e sofisticado */
-            background-color: #2b2b2b !important; 
-            color: #bfa573 !important; 
+            /* Fundo Antracite Transparente (Efeito Vidro) */
+            background: rgba(43, 43, 43, 0.85) !important;
+            backdrop-filter: blur(5px) !important;
+            -webkit-backdrop-filter: blur(5px) !important;
+            
+            color: #bfa573 !important; /* Texto Dourado */
             text-decoration: none !important;
             border-radius: 4px !important;
             font-size: 10px !important;
@@ -413,14 +416,15 @@ st.markdown("""
             text-transform: uppercase !important;
             letter-spacing: 1.5px !important;
             transition: all 0.4s ease !important;
-            border: 1px solid #bfa573 !important;
+            border: 1px solid rgba(191, 165, 115, 0.6) !important; /* Borda dourada suave */
             text-align: center !important;
         }
 
         .action-link:hover {
-            /* No hover ele ganha brilho, mantendo a inversão */
-            background-color: #bfa573 !important;
-            color: #2b2b2b !important;
+            /* No hover, o vidro torna-se mais sólido e brilhante */
+            background: rgba(191, 165, 115, 0.9) !important;
+            color: #1a1a1a !important;
+            border: 1px solid #bfa573 !important;
             box-shadow: 0 5px 15px rgba(191, 165, 115, 0.3) !important;
             transform: translateY(-2px) !important;
         }
