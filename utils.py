@@ -18,14 +18,12 @@ def normalizar(txt):
 
 def identificar_zona_e_ajuste(localidade):
     loc = normalizar(localidade)
-    zona = "ZONA_B_EXPANSAO" # Default para quem não está nas capitais
-    
+    zona = "ZONA_B_EXPANSAO" 
     for key, lista in ZONAS_GEO.items():
         if any(freg in loc for freg in lista):
             if key != "LITORAL_BONUS":
                 zona = key
                 break
-                
     tem_ajuste_litoral = any(l in loc for l in ZONAS_GEO["LITORAL_BONUS"])
     return zona, tem_ajuste_litoral
 
@@ -35,45 +33,52 @@ def get_zona_label(localidade):
     return f"{label} (+Litoral)" if bonus else label
 
 def calcular_score(titulo, preco, localidade, area, df_config=None):
+    """
+    METODOLOGIA: Método Residual Estático (Normas CMVM).
+    OBJETIVO: Avaliar a viabilidade do Ativo (Solo ou Edificado) 
+    perante o custo de oportunidade e CAPEX operacional.
+    """
     if preco <= 0 or area <= 0: return 1
     if df_config is None or df_config.empty: return 3 
     
     zona_id, bonus_mar = identificar_zona_e_ajuste(localidade)
     
     try:
+        # 1. PARÂMETROS DE ZONA
         conf = df_config.set_index('Zona').loc[zona_id]
         ref_venda = float(conf['Ref_Venda_Pronto'])
-        
-        if bonus_mar:
-            ref_venda *= 1.15 
+        if bonus_mar: ref_venda *= 1.15 
             
+        # 2. LIMPEZA DE GCI (Comissões e Impostos de Saída)
         venda_liquida = ref_venda / 1.0615
         
-        # --- FUNDAMENTAÇÃO TÉCNICA DE ATIVOS ---
-        # Identificamos se é Terreno para ajustar a incidência do Custo de Obra
+        # 3. DIFERENCIAÇÃO TÉCNICA (TERRENO vs EDIFICADO)
         nome_norm = normalizar(titulo)
-        is_terreno = any(w in nome_norm for w in ["terreno", "lote", "parcela", "urbanizavel"])
+        is_solo = any(w in nome_norm for w in ["terreno", "lote", "parcela", "urbanizavel"])
         
         custo_obra_base = float(conf['Custo_Obra'])
         
-        if is_terreno:
-            # Para terrenos, o "Custo de Obra" na folha CONFIG representa a construção futura.
-            # No cálculo de teto de compra imediato, aplicamos apenas custos de infraestrutura/licenciamento (estimados em 15%)
-            # para não canibalizar a viabilidade do solo.
+        if is_solo:
+            # Em solos, o custo incidente foca em Infraestruturas/Licenciamento
+            # Fundamento: Padrão 15% do CAPEX de construção integral.
             custo_incidente = custo_obra_base * 0.15
         else:
+            # Em edificado, assume-se reabilitação/obra integral (CAPEX 100%)
             custo_incidente = custo_obra_base
 
-        # Cálculo do Teto de Compra (Métrica Real de Investimento)
+        # 4. TETO DE COMPRA (O valor máximo que o investidor pode pagar para lucrar)
+        # Fórmula: (Valor de Saída - Custos) / (1 + Margem de Lucro)
         teto_compra = (venda_liquida - custo_incidente) / (1 + float(conf['Margem_Flip']))
         
+        # 5. RÁCIO DE VIABILIDADE
         valor_m2_anuncio = preco / area
         ratio = valor_m2_anuncio / teto_compra
         
-        # --- ESCALA DE SCORE 5D (ZONAS DETALHADAS) ---
-        if ratio <= 1.05: return 5     # Ativo em preço de oportunidade técnica
-        if ratio <= 1.25: return 4     # Ativo alinhado com margens de segurança
-        if ratio <= 1.50: return 3     # Preço de mercado (Sem margem de Flip imediata)
-        return 2                       # Ativo sobrevalorizado perante a métrica 5D
+        # 6. SCORE 5D (RIGOR TÉCNICO)
+        if ratio <= 1.00: return 5     # Oportunidade Pura (Abaixo do Teto)
+        if ratio <= 1.15: return 4     # Ativo Validado (Margem Segura)
+        if ratio <= 1.35: return 3     # Preço de Mercado (Fronteira de Risco)
+        return 2                       # Ativo Especulativo (Sem Viabilidade)
+        
     except:
         return 2
