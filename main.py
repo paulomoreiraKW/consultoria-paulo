@@ -71,6 +71,26 @@ def carregar_sistema_completo():
 # Ativação
 df_quarentena, df = carregar_sistema_completo()
 
+# --- ZONA DE QUARENTENA (Só visível para ti) ---
+with st.expander("🔬 Análise de Novas Leads (Preview Técnico)"):
+    if not df_quarentena.empty:
+        # Mostramos apenas o que AINDA NÃO foi aprovado (Decisao vazia)
+        leads_novas = df_quarentena[df_quarentena["Decisao"] == ""]
+        if not leads_novas.empty:
+            for idx, lead in leads_novas.iterrows():
+                col_a, col_b = st.columns([3, 1])
+                with col_a:
+                    st.markdown(f"**{lead['Titulo']}** ({lead['Localidade']})")
+                    st.caption(f"Zona: {lead['Zona_Dinamica']} | Preço/m2: {lead['Preco_Listagem']/lead['Area_m2']:.2f}€")
+                with col_b:
+                    st.metric("Score 5D", f"{lead['Score_Calculado']}/5")
+                
+                if st.button(f"🔍 Ver Draft Relatório: {lead['Referencia']}", key=f"draft_{idx}"):
+                    st.session_state.selected_imovel = lead.to_dict()
+                    st.session_state.page = "DETALHE"
+                    st.rerun()
+        else:
+            st.info("Não há novas leads para análise. Todas as entradas estão validadas.")
 # ==========================================
 # 3. COMPONENTES VISUAIS (CARROSSEL)
 # ==========================================
