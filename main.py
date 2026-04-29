@@ -301,6 +301,7 @@ if st.session_state.page == "LOJA":
                     <b style="font-size:16px;">{row.get('Tipo')}</b><br>
                     <span style="color:#666; font-size:13px;">{row.get('Localidade')}</span><br>
                     <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b>
+                    <span style="font-size:13px; color:#333;">📐 {row.get('Area_m2')} m²</span>
                     <div style="margin-top: 15px;">
                         <a href="{row.get('Link_Fonte', '')}" target="_blank" style="text-decoration: none;">
                             <span style="color: #bfa573; font-size: 10px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #bfa573; padding-bottom: 2px;">
