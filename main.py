@@ -434,6 +434,8 @@ else:
             <div class="bio-text">Especialista em ativos residenciais e industriais. Através da <b>Metodologia 5D</b>, garanto um acompanhamento técnico, jurídico e comercial de excelência.</div>
         </div>""", unsafe_allow_html=True)
 
+# ... (Código anterior de processamento e interface até à linha do carrossel)
+
         if not df.empty:
             render_carousel_fragment(df)
             st.write("")
@@ -443,16 +445,24 @@ else:
                 st.rerun()
         else:
             st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
+# ==========================================
+# NOVO BLOCO CONSOLIDADO (SERVIÇOS + CONTACTOS + RODAPÉ)
+# ==========================================
+
 st.markdown('<div class="main-protection-card" style="border-left:none; border-top:6px solid #1a1a1a; padding-top:20px;">', unsafe_allow_html=True)
+
 m1, m2 = st.columns(2)
+
 with m1:
     st.markdown(f"""<div class="service-box">
         <span class="service-title">📈 Estudo de Mercado</span>
         <span class="service-desc">Análise profunda baseada em dados reais e comparativos para definir o valor certo de venda.</span><br>
         <a href="https://www.kwportugal.pt/pt/property-valuation" class="action-link">Avaliar Imóvel</a>
     </div>""", unsafe_allow_html=True)
+    
     st.markdown("""<div class="service-box">
         <span class="service-title">⚖️ Apoio Jurídico</span>
         <span class="service-desc">Segurança total na documentação, elaboração de CPCV e acompanhamento rigoroso até à escritura.</span>
@@ -463,20 +473,26 @@ with m2:
         <span class="service-title">📣 Plano de Marketing</span>
         <span class="service-desc">Exposição premium em mais de 100 portais nacionais e internacionais com fotografia profissional.</span>
     </div>""", unsafe_allow_html=True)
+    
     st.markdown(f"""<div class="service-box">
         <span class="service-title">🏦 Gestão de Crédito</span>
         <span class="service-desc">Intermediação de crédito certificada para encontrar as melhores condições de financiamento.</span><br>
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSfiMOMKqZhnB14I5_DTrPLQrWYgiQdaw-O2HBfQBoLh4Qk5Ow/viewform" class="action-link">Simular Crédito</a>
     </div>""", unsafe_allow_html=True)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("<br>", unsafe_allow_html=True)
+
+# Botões de Ação Rápida
 ba, bb, bc = st.columns(3)
 with ba: st.link_button("⭐ Google Reviews", "https://share.google/n4FLZO1p2tYTl2vsG")
 with bb: st.link_button("📞 Ligar Agora", "tel:+351911995695")
 with bc: st.link_button("🟢 Whatsapp", "https://wa.me/351911995695")
 
 st.write("<br>", unsafe_allow_html=True)
+
+# Logótipos de Parceiros/Empresa
 f1, f2, f3 = st.columns([1, 1, 1])
 with f1:
     if os.path.exists("P.M.M..png"): st.image("P.M.M..png", width=100)
@@ -485,6 +501,7 @@ with f2:
 with f3:
     if os.path.exists("area_feira.png"): st.image("area_feira.png", width=110)
 
+# Rodapé Legal
 st.markdown("""<div class="legal-footer-box">
     <b>Resumo Plural, Lda.</b> - Licença AMI 21331 - Pessoa Coletiva 517 033 224 <br>
     Morada comercial: Rua Estrada Nacional, nº 1190, 1200 – Zona Ind. do Roligo, 4520-115 Espargo <br>
