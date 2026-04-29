@@ -152,9 +152,20 @@ st.markdown(f"""
         background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
         background-size: cover;
         background-attachment: fixed;
+        z-index: 0;
+    }}
+
+    /* Camada de Blur Leve - Abertura */
+    .stApp::before {{
+        content: "";
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        z-index: -1;
     }}
     
-    /* Botões e Links */
+    /* Botões e Links - A porta continua aberta aqui */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
@@ -177,7 +188,7 @@ st.markdown(f"""
         transform: translateY(-1px) !important;
     }}
 
-    /* Estrutura de Cards */
+    /* Estrutura de Cards - Continua a correr... */
     .main-protection-card {{
         background-color: rgba(253, 250, 245, 0.99);
         padding: 25px 35px 10px 35px;
