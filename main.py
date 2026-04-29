@@ -147,65 +147,13 @@ fundo_marmore = get_base64("Background.svg")
 
 st.markdown(f"""
     <style>
-    /* 1. FUNDO GERAL SUAVE */
     .stApp {{
         background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
         background-size: cover;
         background-attachment: fixed;
     }}
-    .stApp::before {{
-        content: "";
-        position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(255, 255, 255, 0.7); 
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-        z-index: -1;
-    }}
-
-    /* 2. CARDS PRINCIPAIS (Transparência Elegante) */
-    .main-protection-card {{
-        background-color: rgba(255, 255, 255, 0.4) !important;
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        border-left: 6px solid #bfa573;
-        border-top: 1px solid rgba(255,255,255,0.5);
-        padding: 25px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-    }}
-
-    /* 3. CAIXAS DE SERVIÇO (Onde estava o problema) */
-    .service-box {{
-        background-color: rgba(255, 255, 255, 0.6) !important; /* Vidro semi-transparente */
-        backdrop-filter: blur(5px);
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid rgba(191, 165, 115, 0.3); /* Borda dourada muito subtil */
-        border-bottom: 3px solid #bfa573; /* Linha de destaque em baixo */
-        margin-bottom: 15px;
-        min-height: 180px;
-        transition: transform 0.3s ease;
-    }}
     
-    .service-box:hover {{
-        transform: translateY(-5px);
-        background-color: rgba(255, 255, 255, 0.8) !important;
-    }}
-
-    .service-title {{ color: #1a1a1a; font-weight: 800; font-size: 15px; margin-bottom: 8px; display: block; }}
-    .service-desc {{ color: #444; font-size: 12.5px; line-height: 1.5; }}
-
-    /* 4. BOTÕES DE CONTACTO (Abaixo dos serviços) */
-    .stLinkButton > a {{
-        background-color: white !important;
-        border: 1px solid #e0e0e0 !important;
-        border-radius: 10px !important;
-        color: #1a1a1a !important;
-    }}
-    </style>
-""", unsafe_allow_html=True)
-     /* Botões e Links */
+    /* Botões e Links */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
