@@ -205,8 +205,7 @@ st.markdown(f"""
     }}
     </style>
 """, unsafe_allow_html=True)
-
-    /* Botões e Links */
+     /* Botões e Links */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
