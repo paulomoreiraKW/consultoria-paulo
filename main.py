@@ -155,13 +155,13 @@ st.markdown(f"""
         background-position: center;
     }}
     
-    /* 2. O Filtro Invisível (Só Desfoque) */
+    /* 2. O Filtro Invisível (SÓ BLUR) */
     .stApp::before {{
         content: "";
         position: fixed;
         top: 0; left: 0; 
         width: 100vw; height: 100vh;
-        /* ZERO cor branca. Apenas o efeito de lente/profundidade */
+        /* Sem cor, apenas desfoque */
         backdrop-filter: blur(3px); 
         -webkit-backdrop-filter: blur(3px);
         z-index: -1;
@@ -169,13 +169,11 @@ st.markdown(f"""
 
     /* 3. Garantir que as tuas caixas brancas e botões têm força */
     .main-protection-card, .white-solid-box, .service-box {{
-        background-color: #ffffff !important; /* Branco sólido para recortar no mármore */
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; /* Sombra para dar relevo */
+        background-color: #ffffff !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
     }}
-    </style>
-""", unsafe_allow_html=True)
-    
-    /* Botões e Links */
+
+    /* 4. Botões e Links (Agora dentro do bloco Style para não dar erro) */
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
         background-color: #ffffff !important;
@@ -193,10 +191,12 @@ st.markdown(f"""
     
     div.stButton > button:hover, div.stDownloadButton > button:hover, .stLinkButton > a:hover {{
         background-color: transparent !important;
-        color: #1a1a1a !important;
+        color: #bfa573 !important; /* Destaque em dourado no hover */
         border-color: #bfa573 !important;
         transform: translateY(-1px) !important;
     }}
+    </style>
+""", unsafe_allow_html=True)
 
     /* Estrutura de Cards */
     .main-protection-card {{
