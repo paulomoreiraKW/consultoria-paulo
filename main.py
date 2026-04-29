@@ -151,6 +151,17 @@ st.markdown(f"""
         background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
         background-size: cover;
         background-attachment: fixed;
+        position: relative; /* Necessário para o efeito de fundo */
+    }}
+    
+    /* BLOCO NOVO: O efeito de "Vidro" sugerido pela tua amiga */
+    .stApp::before {{
+        content: "";
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255, 255, 255, 0.75); /* Opacidade */
+        backdrop-filter: blur(3px); /* Desfoque */
+        z-index: -1;
     }}
     
     /* Botões e Links */
