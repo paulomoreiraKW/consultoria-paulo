@@ -1,62 +1,41 @@
-import re
-import unicodedata
-from config import REFERENCIAIS_MERCADO_2026
+import pandas as pd
 
-def normalizar(txt):
-    if not txt:
-        return ""
-    txt = str(txt).lower()
-    txt = unicodedata.normalize("NFD", txt).encode("ascii", "ignore").decode("utf-8")
-    return txt
-
-def get_zona_data(localidade):
+def identificar_zona_e_ajuste(localidade):
     loc = normalizar(localidade)
-    for zona, dados in REFERENCIAIS_MERCADO_2026.items():
-        if zona == "DEFAULT":
-            continue
-        if any(normalizar(f) in loc for f in dados["freguesias"]):
-            return dados
-    return REFERENCIAIS_MERCADO_2026["DEFAULT"]
-
-def get_zona_label(localidade):
-    loc = normalizar(localidade)
-    for zona, dados in REFERENCIAIS_MERCADO_2026.items():
-        if zona == "DEFAULT":
-            continue
-        if any(normalizar(f) in loc for f in dados["freguesias"]):
-            return zona.replace("_", " ")
-    return "ZONA C"
-
-def detectar_tipologia(titulo):
-    t = normalizar(titulo)
-    if "moradia" in t:
-        return "Moradia"
-    elif "terreno" in t:
-        return "Terreno"
-    elif any(w in t for w in ["pavilhao", "armazem", "industrial"]):
-        return "Industrial"
+    
+    if "madeira" in loc or "feira" in loc:
+        zona = "ZONA_A_SJM_FEIRA"
+    elif "azemeis" in loc or "cambra" in loc:
+        zona = "ZONA_C_INDUSTRIAL"
+    elif "espinho" in loc or "aveiro" in loc:
+        zona = "ZONA_A_PLUS"
     else:
-        return "Apartamento"
+        zona = "ZONA_B_EXPANSAO"
 
-def calcular_score(titulo, preco, localidade, area):
-    if preco <= 0:
-        return 1
+    litoral_check = ["ovar", "esmoriz", "cortegaça", "furadouro", "jacinto"]
+    tem_ajuste_litoral = any(x in loc for x in litoral_check)
     
-    area_calculo = area if area > 0 else 100
-    valor_m2 = preco / area_calculo
+    return zona, tem_ajuste_litoral
+
+def calcular_score_inteligente(row, df_config):
+    zona_id, bonus_mar = identificar_zona_e_ajuste(row['Localidade'])
     
-    zona = get_zona_data(localidade)
-    t = normalizar(titulo)
+    conf = df_config.loc[zona_id]
     
-    if any(w in t for w in ["novo", "nova", "construcao"]):
-        meta = zona["novo"]
-    elif any(w in t for w in ["usado", "usada"]):
-        meta = zona["usado"]
-    else:
-        meta = zona["recuperar"]
+    ref_venda = float(conf['Ref_Venda_Pronto'])
+    
+    if bonus_mar:
+        ref_venda = ref_venda * 1.15
         
-    if valor_m2 <= meta * 0.7: return 5
-    if valor_m2 <= meta * 0.85: return 4
-    if valor_m2 <= meta * 1.05: return 3
-    if valor_m2 <= meta * 1.25: return 2
-    return 1
+    venda_liquida = ref_venda / 1.0615
+    
+    teto_compra = (venda_liquida - float(conf['Custo_Obra'])) / (1 + float(conf['Margem_Flip']))
+    
+    preco_m2_anuncio = row['Preco_Listagem'] / row['Area_m2']
+    
+    ratio = preco_m2_anuncio / teto_compra
+    
+    if ratio <= 1.0: return 5  
+    if ratio <= 1.15: return 4 
+    return 3                   
+
