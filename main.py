@@ -396,27 +396,31 @@ else: # HOME PAGE
 # NOVO BLOCO CONSOLIDADO (SERVIÇOS + CONTACTOS + RODAPÉ)
 # ==========================================
 
+# --- CSS REFINADO: FOCO NO DETALHE PREMIUM ---
 st.markdown("""
     <style>
         .action-link {
-            display: inline-block;
-            margin-top: 12px;
-            padding: 8px 20px;
-            background-color: #1a1a1a;
-            color: #ffffff !important;
+            display: inline-block !important;
+            margin-top: 15px !important;
+            padding: 10px 25px !important;
+            background-color: #1a1a1a !important; /* Fundo Negro Profundo */
+            color: #bfa573 !important; /* TEXTO DOURADO KW */
             text-decoration: none !important;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            border: 1px solid #bfa573;
+            border-radius: 4px !important; /* Cantos mais retos = mais sério */
+            font-size: 10px !important; /* Ligeiramente menor para elegância */
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1.5px !important; /* Espaçamento de luxo */
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+            border: 1px solid #bfa573 !important; /* Borda Dourada Fina */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         }
+
         .action-link:hover {
-            background-color: #bfa573;
-            color: #1a1a1a !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background-color: #bfa573 !important; /* Inverte fundo para Dourado */
+            color: #1a1a1a !important; /* Texto passa a Preto no hover */
+            box-shadow: 0 5px 15px rgba(191, 165, 115, 0.4) !important; /* Brilho dourado */
+            transform: translateY(-2px) !important; /* Elevação premium */
         }
     </style>
 """, unsafe_allow_html=True)
