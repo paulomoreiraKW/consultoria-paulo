@@ -6,7 +6,6 @@ import time
 import requests
 import re
 import hashlib
-# IMPORTANTE: Garante que tens o ficheiro utils.py na mesma pasta
 from utils import calcular_score, get_zona_label
 
 # ==========================================
@@ -15,13 +14,10 @@ from utils import calcular_score, get_zona_label
 if "page" not in st.session_state: st.session_state.page = "HOME"
 if "selected_imovel" not in st.session_state: st.session_state.selected_imovel = None
 if "idx" not in st.session_state: st.session_state.idx = 0
-if "last_update" not in st.session_state: st.session_state.last_update = time.time()
 
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
-# ==========================================
-# 2. FUNÇÕES AUXILIARES (DEFINIR PRIMEIRO)
-# ==========================================
+# --- Funções de Suporte ---
 def get_base64(bin_file):
     if os.path.exists(bin_file):
         with open(bin_file, 'rb') as f:
@@ -31,92 +27,86 @@ def get_base64(bin_file):
 def safe_float(value):
     if value is None or value == "": return 0.0
     try:
-        val_str = str(value).replace("€","").replace("%","").replace("\xa0","").replace(" ","").strip()
-        if "." in val_str and "," in val_str:
-            val_str = val_str.replace(".", "").replace(",", ".")
-        elif "," in val_str:
-            val_str = val_str.replace(",", ".")
+        val_str = str(value).replace("€","").replace("%","").replace(" ","").replace("\xa0","").strip()
+        if "." in val_str and "," in val_str: val_str = val_str.replace(".", "").replace(",", ".")
+        elif "," in val_str: val_str = val_str.replace(",", ".")
         return float(val_str)
     except: return 0.0
 
-def format_pt(n):
-    return f"{n:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-def enviar_para_sheet(payload):
-    SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSSqhOlsJsZ6_QLzvkE8YUURy3Q47OEVb1l8OErjerILx_oAcU27jqP8Ju3q6jPI-O0g/exec"
-    assinatura_dados = hashlib.md5(str(payload).encode()).hexdigest()
-    if "ultima_assinatura" in st.session_state:
-        if st.session_state.ultima_assinatura == assinatura_dados:
-            return False                   
-    try:
-        res = requests.post(SCRIPT_URL, json=payload, timeout=10)
-        if res.status_code == 200:
-            st.session_state.ultima_assinatura = assinatura_dados
-            return True
-    except: return False
-    return False
-
 # ==========================================
-# 3. CONEXÃO AO GOOGLE SHEETS (3 FONTES)
+# 2. CÉREBRO 2026 - CARREGAMENTO E FILTROS
 # ==========================================
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
-# Carrega separadores específicos para não misturar Leads com Ativos
 URL_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
-URL_ACTIVOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=ACTIVOS"
 URL_CONFIG = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=CONFIG_MERCADO"
 
-@st.cache_data(ttl=600)
-def load_data(url):
+@st.cache_data(ttl=600) # Atualiza a cada 10 min
+def load_and_process_brain():
     try:
-        data = pd.read_csv(url)
-        return data.fillna("")
-    except: return pd.DataFrame()
+        df_bruto = pd.read_csv(URL_LEADS).fillna("")
+        df_conf = pd.read_csv(URL_CONFIG).fillna("")
+        
+        # Cálculos de Inteligência
+        df_bruto["Area_m2"] = df_bruto["Area_m2"].apply(safe_float)
+        df_bruto["Preco_Listagem"] = df_bruto["Preco_Listagem"].apply(safe_float)
+        
+        df_bruto["Score_Calculado"] = df_bruto.apply(
+            lambda row: calcular_score(
+                row.get("Titulo") or "", 
+                row["Preco_Listagem"], 
+                row.get("Localidade", ""), 
+                row["Area_m2"], 
+                df_conf
+            ), axis=1
+        )
+        
+        # Filtro de Qualidade: Apenas Score >= 1 (ou o que definires como mínimo para público)
+        df_final = df_bruto[df_bruto["Score_Calculado"] >= 1].copy()
+        
+        # Se houver coluna de Decisão manual, respeitá-la
+        if "Decisao" in df_final.columns:
+            df_final = df_final[df_final["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK", ""])]
+            
+        return df_final.sort_values(by="Score_Calculado", ascending=False).reset_index(drop=True)
+    except:
+        return pd.DataFrame()
 
-# Carregamento Inicial
-df_bruto_leads = load_data(URL_LEADS)
-df_config = load_data(URL_CONFIG)
-df_activos_bruto = load_data(URL_ACTIVOS)
-
-# ==========================================
-# 4. PROCESSAMENTO DAS LEADS (CÉREBRO)
-# ==========================================
-def processar_leads_inteligentes(df, df_conf):
-    if df.empty or df_conf.empty: return df
-    df["Area_m2"] = df["Area_m2"].apply(safe_float)
-    df["Preco_Listagem"] = df["Preco_Listagem"].apply(safe_float)
-    df["Score_Calculado"] = df.apply(
-        lambda row: calcular_score(row.get("Titulo") or "", row["Preco_Listagem"], 
-                                 row.get("Localidade", ""), row["Area_m2"], df_conf), axis=1
-    )
-    df["Zona_Dinamica"] = df["Localidade"].apply(get_zona_label)
-    return df
-
-df_leads = processar_leads_inteligentes(df_bruto_leads, df_config)
-
-# Preparar o "df" da Galeria (Só Ativos Aprovados)
-if not df_activos_bruto.empty:
-    df = df_activos_bruto.copy()
-    # Filtros de Segurança do Paulo
-    if "Score_PM5D" in df.columns:
-        df["Score_PM5D"] = pd.to_numeric(df["Score_PM5D"], errors="coerce").fillna(0)
-        df = df[df["Score_PM5D"] >= 1]
-    if "Decisao" in df.columns:
-        df = df[df["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK", "PUBLICAR"])]
-    df = df.reset_index(drop=True)
-else:
-    df = pd.DataFrame()
+df = load_and_process_brain()
 
 # ==========================================
-# 5. INTERFACE (CSS DO PAULO)
+# 3. COMPONENTES VISUAIS (CARROSSEL)
+# ==========================================
+@st.fragment(run_every=3)
+def render_carousel_fragment(df_data):
+    if not df_data.empty:
+        # Garante que o índice não ultrapassa o tamanho atual do DF
+        current_idx = st.session_state.idx % len(df_data)
+        row = df_data.iloc[current_idx]
+        
+        st.markdown(f"""
+        <div class="preview-window">
+            <img src="{row.get('Capa_Manual','')}" style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:5px;">
+            <div style="font-size:12px; color:#1a1a1a;"><b>{row.get('Tipo')} | {row.get('Localidade')}</b></div>
+            <div style="font-size:11px; color:#bfa573;">Score Metodologia 5D: {row.get('Score_Calculado')}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.session_state.idx = (current_idx + 1) % len(df_data)
+    else:
+        st.markdown('<div class="preview-window">Sincronizando Ativos...</div>', unsafe_allow_html=True)
+
+# ==========================================
+# 4. ESTILIZAÇÃO E LAYOUT (CSS)
 # ==========================================
 fundo_marmore = get_base64("Background.svg")
-
 st.markdown(f"""
     <style>
-    .stApp {{
-        background-image: url("data:image/svg+xml;base64,{fundo_marmore}");
-        background-size: cover;
-        background-attachment: fixed;
+    .stApp {{ background-image: url("data:image/svg+xml;base64,{fundo_marmore}"); background-size: cover; background-attachment: fixed; }}
+    .main-protection-card {{ background-color: rgba(253, 250, 245, 0.99); padding: 25px; border-radius: 15px; border-left: 8px solid #bfa573; box-shadow: 0 15px 35px rgba(0,0,0,0.1) ; margin-bottom: 20px; }}
+    .preview-window {{ border: 2px dashed #bfa573; background-color: #ffffff; padding: 10px; border-radius: 12px; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; }}
+    /* ... Teu CSS restante ... */
+    </style>
+""", unsafe_allow_html=True)
     }}
     div.stButton > button, div.stDownloadButton > button, .stLinkButton > a {{
         width: 100% !important;
