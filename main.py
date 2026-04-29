@@ -83,18 +83,39 @@ def enviar_para_sheet(payload):
 SHEET_ID = "1PoK3Gj6mdLVkniIzDgFNhwmOGgpznRAIC0CGzweASag"
 URL_LEADS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LEADS"
 URL_ACTIVOS = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=ACTIVOS"
+URL_CONFIG = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet=CONFIG_MERCADO"
 
 @st.cache_data(ttl=3600)
-def load_data(url):
+def load_config(url):
     try:
-        data = pd.read_csv(url)
-        return data.fillna("")
+        return pd.read_csv(url)
     except:
         return pd.DataFrame()
 
+# No fluxo principal:
 df_bruto = load_data(URL_LEADS)
+df_config = load_config(URL_CONFIG) # <--- NOVO
 
-df_leads = processar_leads_inteligentes(df_bruto)
+# Altera a chamada do processamento:
+def processar_leads_inteligentes(df, df_conf):
+    if df.empty: return df
+    df["Area_m2"] = df["Area_m2"].apply(safe_float)
+    df["Preco_Listagem"] = df["Preco_Listagem"].apply(safe_float)
+
+    df["Score_Calculado"] = df.apply(
+        lambda row: calcular_score(
+            row.get("Titulo") or "",
+            row["Preco_Listagem"],
+            row.get("Localidade", ""),
+            row["Area_m2"],
+            df_conf # <--- PASSA A CONFIG AQUI
+        ),
+        axis=1
+    )
+    df["Zona_Dinamica"] = df["Localidade"].apply(get_zona_label)
+    return df
+
+df_leads = processar_leads_inteligentes(df_bruto, df_config)
 
 st.subheader("🔬 Painel de Análise de Novas Leads")
 if st.checkbox("🔬 Ver análise detalhada do cérebro"):
