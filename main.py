@@ -100,6 +100,8 @@ if query_params.get("ppkmor") == "7":
                 column_config={
                     "Score_Calculado": st.column_config.NumberColumn("⭐ Score", format="%d/5"),
                     "Preco_Listagem": st.column_config.NumberColumn("Preço (€)", format="%.2f€"),
+                    "Area_m2": st.column_config.NumberColumn("Área Final", format="%.1f m²"),
+                    "Area_Qualidade": st.column_config.TextColumn("Fonte da Área"),
                 },
                 hide_index=True,
                 use_container_width=True
