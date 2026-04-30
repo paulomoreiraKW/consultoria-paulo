@@ -93,7 +93,7 @@ if query_params.get("ppkmor") == "7":
             df_view["P_m2"] = (df_view["Preco_Listagem"] / df_view["Area_m2"]).round(2)
             
             # Colunas que tu precisas de ver para decidir
-            colunas_foco = ["Status", "Score_Calculado", "Titulo", "Localidade", "Preco_Listagem", "Area_m2", "P_m2", "Referencia"]
+            colunas_foco = ["Status", "Score_Calculado", "Tipologia", "Titulo", "Localidade", "Preco_Listagem", "Area_m2", "Area_Qualidade", "Referencia"]
             
             st.dataframe(
                 df_final_view := df_view[colunas_foco].sort_values(by="Score_Calculado", ascending=False),
