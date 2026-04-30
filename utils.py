@@ -2,7 +2,7 @@ import re
 import unicodedata
 import pandas as pd
 
-# Grupos Geográficos para o Radar (Configuração fixa de nomes)
+# 1. CONFIGURAÇÕES GEOGRÁFICAS
 ZONAS_GEO = {
     "ZONA_A_SJM_FEIRA": ["madeira", "feira", "sjm", "sao joao"],
     "ZONA_C_INDUSTRIAL": ["azemeis", "cambra", "cesar", "fajoes", "loureiro"],
@@ -32,53 +32,94 @@ def get_zona_label(localidade):
     label = zona_id.replace("_", " ")
     return f"{label} (+Litoral)" if bonus else label
 
-def calcular_score(titulo, preco, localidade, area, df_config=None):
-    """
-    METODOLOGIA: Método Residual Estático (Normas CMVM).
-    OBJETIVO: Avaliar a viabilidade do Ativo (Solo ou Edificado) 
-    perante o custo de oportunidade e CAPEX operacional.
-    """
-    if preco <= 0 or area <= 0: return 1
-    if df_config is None or df_config.empty: return 3 
-    
-    zona_id, bonus_mar = identificar_zona_e_ajuste(localidade)
-    
+# 2. NORMALIZAÇÃO DE ÁREA
+def get_area_real(row):
     try:
-        # 1. PARÂMETROS DE ZONA
-        conf = df_config.set_index('Zona').loc[zona_id]
-        ref_venda = float(conf['Ref_Venda_Pronto'])
-        if bonus_mar: ref_venda *= 1.15 
-            
-        # 2. LIMPEZA DE GCI (Comissões e Impostos de Saída)
-        venda_liquida = ref_venda / 1.0615
-        
-        # 3. DIFERENCIAÇÃO TÉCNICA (TERRENO vs EDIFICADO)
-        nome_norm = normalizar(titulo)
-        is_solo = any(w in nome_norm for w in ["terreno", "lote", "parcela", "urbanizavel"])
-        
-        custo_obra_base = float(conf['Custo_Obra'])
-        
-        if is_solo:
-            # Em solos, o custo incidente foca em Infraestruturas/Licenciamento
-            # Fundamento: Padrão 15% do CAPEX de construção integral.
-            custo_incidente = custo_obra_base * 0.15
-        else:
-            # Em edificado, assume-se reabilitação/obra integral (CAPEX 100%)
-            custo_incidente = custo_obra_base
+        area_bruta = float(str(row.get("Area_m2") or 0).replace(",","."))
+        area_util = float(str(row.get("Area_Util") or 0).replace(",","."))
+        tipo = (str(row.get("Tipologia") or "")).upper()
 
-        # 4. TETO DE COMPRA (O valor máximo que o investidor pode pagar para lucrar)
-        # Fórmula: (Valor de Saída - Custos) / (1 + Margem de Lucro)
-        teto_compra = (venda_liquida - custo_incidente) / (1 + float(conf['Margem_Flip']))
+        if area_bruta > 0: return area_bruta
+
+        if area_util > 0:
+            if "APARTAMENTO" in tipo: return area_util * 1.15
+            if any(x in tipo for x in ["MORADIA", "INDEPENDENTE", "GEMINADA"]): return area_util * 1.20
+            if any(x in tipo for x in ["PAVILHAO", "ARMAZEM", "INDUSTRIAL"]): return area_util * 1.10
+            return area_util * 1.20
+        return 0
+    except: return 0
+
+def get_area_qualidade(row):
+    if float(str(row.get("Area_m2") or 0).replace(",",".")) > 0: return "BRUTA"
+    if float(str(row.get("Area_Util") or 0).replace(",",".")) > 0: return "ESTIMADA"
+    return "SEM_DADOS"
+
+# 3. IDENTIFICAÇÃO DE TIPOLOGIA
+def identificar_tipologia(titulo):
+    nome = normalizar(titulo)
+    if "terreno" in nome or "lote" in nome: return "TERRENO"
+    if any(x in nome for x in ["pavilhao", "armazem", "armazens"]): return "INDUSTRIAL"
+    if "apartamento" in nome or re.search(r'\bt[0-9]\b', nome): return "APARTAMENTO"
+    
+    if "terrea" in nome:
+        return "TERREA_GEMINADA" if "geminada" in nome else "TERREA_INDEPENDENTE"
+    
+    if "geminada" in nome:
+        return "GEMINADA_PONTA" if "ponta" in nome else "GEMINADA"
+    
+    if any(x in nome for x in ["independente", "isolada", "4 frentes"]): return "INDEPENDENTE"
+    
+    return "MORADIA"
+
+# 4. CÁLCULO DO SCORE 5D
+def calcular_score(row, df_config):
+    try:
+        preco = float(str(row.get("Preco_Listagem") or 0).replace(",","."))
+        area = float(str(row.get("Area_m2") or 0).replace(",","."))
+        localidade = row.get("Localidade")
+        tipo = row.get("Tipologia")
+
+        if preco <= 0 or area <= 0: return 1
+
+        zona_id, bonus_mar = identificar_zona_e_ajuste(localidade)
+        conf = df_config.set_index('Zona').loc[zona_id]
+
+        ref_venda = float(str(conf['Ref_Venda_Pronto']).replace(",","."))
+        custo_obra_base = float(str(conf['Custo_Obra']).replace(",","."))
         
-        # 5. RÁCIO DE VIABILIDADE
-        valor_m2_anuncio = preco / area
-        ratio = valor_m2_anuncio / teto_compra
+        # Limpeza de Margens (Suporta 0.20 ou 20%)
+        def clean_pct(val):
+            v = str(val).replace("%","").replace(",",".").strip()
+            return float(v)/100 if float(v) > 1 else float(v)
+
+        margem_flip = clean_pct(conf['Margem_Flip'])
+        margem_venda = clean_pct(conf['Margem_Venda']) if 'Margem_Venda' in conf else 1.0615
+
+        # Ajustes de Tipologia no Valor de Venda
+        if tipo == "INDEPENDENTE": ref_venda *= 1.10
+        elif tipo == "GEMINADA": ref_venda *= 0.95
+        elif tipo == "TERREA_INDEPENDENTE": ref_venda *= 1.15 # Térreas isoladas valem muito mais
         
-        # 6. SCORE 5D (RIGOR TÉCNICO)
-        if ratio <= 1.00: return 5     # Oportunidade Pura (Abaixo do Teto)
-        if ratio <= 1.15: return 4     # Ativo Validado (Margem Segura)
-        if ratio <= 1.35: return 3     # Preço de Mercado (Fronteira de Risco)
-        return 2                       # Ativo Especulativo (Sem Viabilidade)
+        if bonus_mar: ref_venda *= 1.15
         
+        venda_liquida = ref_venda / margem_venda
+
+        # Ajustes de Custo de Obra (Capex)
+        if tipo == "TERRENO": custo_incidente = custo_obra_base * 0.15
+        elif tipo == "GEMINADA": custo_incidente = custo_obra_base * 0.90
+        elif tipo == "GEMINADA_PONTA": custo_incidente = custo_obra_base * 0.95
+        elif tipo == "TERREA_GEMINADA": custo_incidente = custo_obra_base * 0.95
+        elif tipo == "TERREA_INDEPENDENTE": custo_incidente = custo_obra_base * 1.10
+        elif tipo == "INDEPENDENTE": custo_incidente = custo_obra_base * 1.10
+        else: custo_incidente = custo_obra_base
+
+        teto_compra = (venda_liquida - custo_incidente) / (1 + margem_flip)
+        
+        ratio = (preco / area) / teto_compra
+
+        if ratio <= 1.00: return 5
+        if ratio <= 1.15: return 4
+        if ratio <= 1.35: return 3
+        return 2
     except:
         return 2
