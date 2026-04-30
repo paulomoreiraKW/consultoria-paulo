@@ -305,7 +305,7 @@ if st.session_state.page == "LOJA":
                     <img src="{row.get('Capa_Manual', '')}" style="width:100%; border-radius:10px; margin-bottom:10px;">
                     <b style="font-size:16px;">{row.get('Tipo')}</b><br>
                     <span style="color:#666; font-size:13px;">{row.get('Localidade')}</span><br>
-                    <b style="font-size:18px; color:#bfa573;">{preco:,.0f}€</b>
+                    <b style="font-size:18px; color:#bfa573;">{f"{preco:,.0f}".replace(",", " ")}€</b>
                     <span style="font-size:13px; color:#333;">📐 {row.get('Area_m2')} m²</span>
                     <div style="margin-top: 15px;">
                         <a href="{row.get('Link_Fonte', '')}" target="_blank" style="text-decoration: none;">
