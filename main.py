@@ -46,26 +46,35 @@ def carregar_sistema_completo():
         df_leads = pd.read_csv(URL_LEADS).fillna("")
         df_conf = pd.read_csv(URL_CONFIG).fillna("")
         
-        # O Cérebro processa TODAS as Leads em tempo real (Quarentena)
-        df_leads["Area_m2"] = df_leads["Area_m2"].apply(safe_float)
+        # A. Limpeza básica de preços
         df_leads["Preco_Listagem"] = df_leads["Preco_Listagem"].apply(safe_float)
         
-        df_leads["Score_Calculado"] = df_leads.apply(
-            lambda row: calcular_score(
-                row.get("Titulo") or "", 
-                row["Preco_Listagem"], 
-                row.get("Localidade", ""), 
-                row["Area_m2"], 
-                df_conf
-            ), axis=1
+        # B. Identificação de Tipologia (Manual vs Auto)
+        df_leads["Tipologia"] = df_leads.apply(
+            lambda row: str(row["Tipologia_Manual"]).strip() if str(row.get("Tipologia_Manual", "")).strip() != "" 
+            else identificar_tipologia(row.get("Titulo", "")),
+            axis=1
         )
+        
+        # C. Normalização de Área Inteligente
+        # Nota: Passamos a linha toda para o utils decidir entre Bruta/Util e aplicar rácios
+        df_leads["Area_m2"] = df_leads.apply(get_area_real, axis=1)
+        df_leads["Area_Qualidade"] = df_leads.apply(get_area_qualidade, axis=1)
+        
+        # D. Cálculo do Score 5D (Agora com o novo motor de custos e ajustes)
+        df_leads["Score_Calculado"] = df_leads.apply(
+            lambda row: calcular_score(row, df_conf), 
+            axis=1
+        )
+        
         df_leads["Zona_Dinamica"] = df_leads["Localidade"].apply(get_zona_label)
         
-        # Filtro de Activos (O que já passou pelo teu "OK" no Sheets ou na App)
+        # Filtro de Activos para a Galeria Pública
         df_publico = df_leads[df_leads["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])].copy()
         
         return df_leads, df_publico.sort_values(by="Score_Calculado", ascending=False).reset_index(drop=True)
-    except:
+    except Exception as e:
+        st.error(f"Erro no Cérebro: {e}")
         return pd.DataFrame(), pd.DataFrame()
 
 # Ativação
