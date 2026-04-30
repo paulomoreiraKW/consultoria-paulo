@@ -6,7 +6,7 @@ import time
 import requests
 import re
 import hashlib
-from utils import calcular_score, get_zona_label
+from utils import calcular_score, get_zona_label, identificar_tipologia, get_area_real, get_area_qualidade
 
 # ==========================================
 # 1. CONFIGURAÇÕES E ESTADO DA SESSÃO
