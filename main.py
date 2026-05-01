@@ -122,12 +122,13 @@ if query_params.get("ppkmor") == "7":
             
             # Seletor para abrires a ficha técnica de qualquer lead (mesmo as em quarentena)
             escolha = st.selectbox("Analise específica:", 
-                                  options=df_final_view["Referencia"].unique(),
-                                  index=None,
+                                  options=df_view["Referencia"].unique(), 
+                                  index=None, 
                                   placeholder="Escolha a Referência...")
             
             if escolha:
-                lead_selecionada = df_quarentena[df_quarentena["Referencia"] == escolha].iloc[0]
+                # Busca no df_view para garantir que encontras qualquer uma
+                lead_selecionada = df_view[df_view["Referencia"] == escolha].iloc[0]
                 if st.button(f"🚀 Abrir Ficha de {escolha}"):
                     st.session_state.selected_imovel = lead_selecionada.to_dict()
                     st.session_state.page = "DETALHE"
