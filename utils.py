@@ -17,9 +17,7 @@ def normalizar(txt):
     return txt
 
 def extrair_capex_do_titulo(titulo):
-    # Normalizar remove acentos e coloca em minúsculas
     nome = normalizar(titulo)
-
     if not nome:
         return None 
 
@@ -29,13 +27,14 @@ def extrair_capex_do_titulo(titulo):
     if any(x in nome for x in ["total", "ruina", "reconstruir"]):
         return 900
 
-    if any(x in nome for x in ["remodelar", "c/capex", "c/ obra"]):
+    # Adicionado "medio" para ser gradual como pretendes
+    if any(x in nome for x in ["remodelar", "c/capex", "c/ obra", "medio"]):
         return 450
 
     if any(x in nome for x in ["pintura", "cosmetica", "ligeiro"]):
         return 150
 
-    return None # Não assume 0, para não dar falso "Pronto"
+    return None
 
 def classificar_estado(capex):
     if capex is None:
