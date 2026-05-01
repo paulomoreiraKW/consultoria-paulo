@@ -372,7 +372,7 @@ elif st.session_state.page == "DETALHE":
         # --- LIGAÇÃO AO CÉREBRO (Processado no início do main) ---
         ref = row.get("Referencia", "N/A")
         preco_lista = safe_float(row.get("Preco_Listagem", 0))
-        capex_base = safe_float(row.get("CAPEX_Estimado", 0))
+        capex_base = safe_float(row.get("CAPEX_Titulo", 0))
         exit_base = safe_float(row.get("Preco_Exit", 0))
         invest_total = safe_float(row.get("Investimento_Total", 0))
 
