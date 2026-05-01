@@ -7,13 +7,14 @@ import requests
 import re
 import hashlib
 
-# 1. IMPORTS DO MOTOR TÉCNICO (Ajustado)
 from utils import (
     calcular_score, 
     identificar_tipologia, 
     get_area_real, 
     get_area_qualidade,
-    identificar_zona_e_ajuste
+    identificar_zona_e_ajuste,
+    extrair_capex_do_titulo,      
+    classificar_estado            
 )
 
 # ==========================================
