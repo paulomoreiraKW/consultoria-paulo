@@ -138,69 +138,98 @@ def identificar_tipologia(titulo):
 # 4. CÁLCULO DO SCORE 5D
 def calcular_score(row, df_config):
     try:
-        # 1. Limpeza inicial (TEU CÓDIGO)
+        # 1. BASE
         preco = float(str(row.get("Preco_Listagem") or 0).replace(",","."))
         area = float(str(row.get("Area_m2") or 0).replace(",","."))
         localidade = row.get("Localidade")
         tipo = row.get("Tipologia")
         titulo = row.get("Titulo", "")
 
-        if preco <= 0 or area <= 0: return 1
+        if preco <= 0 or area <= 0:
+            return 1
 
-        # 2. Configurações de Zona (TEU CÓDIGO)
+        # 2. ZONA
         zona_id, bonus_mar = identificar_zona_e_ajuste(localidade)
         conf = df_config.set_index('Zona').loc[zona_id]
 
         ref_venda = float(str(conf['Ref_Venda_Pronto']).replace(",","."))
         custo_obra_base = float(str(conf['Custo_Obra']).replace(",","."))
-        
+
         def clean_pct(val):
             v = str(val).replace("%","").replace(",",".").strip()
             return float(v)/100 if float(v) > 1 else float(v)
 
         margem_flip = clean_pct(conf['Margem_Flip'])
-        margem_venda = clean_pct(conf['Margem_Venda']) if 'Margem_Venda' in conf else 1.0615
+        margem_venda = clean_pct(conf['Margem_Venda']) if 'Margem_Venda' in conf else 1.06
 
-        # 3. Ajustes de Tipologia (TEU CÓDIGO)
+        # 3. TIPOLOGIA
         if tipo == "INDEPENDENTE": ref_venda *= 1.10
         elif tipo == "GEMINADA": ref_venda *= 0.95
         elif tipo == "TERREA_INDEPENDENTE": ref_venda *= 1.15
-        
-        if bonus_mar: ref_venda *= 1.15
 
-        # 4. IDENTIFICAÇÃO DO ESTADO (NOVA LÓGICA)
+        if bonus_mar:
+            ref_venda *= 1.15
+
+        # 4. CAPEX + ESTADO (CORRETO)
         capex_hint = extrair_capex_do_titulo(titulo)
-        estado = classificar_estado(capex_hint)
 
-        fator_estado_venda = {"PRONTO": 1.00, "LIGEIRO": 0.97, "MEDIO": 0.93, "PESADO": 0.88}
-        penalizacao_liquidez = {"PRONTO": 1.00, "LIGEIRO": 1.02, "MEDIO": 1.05, "PESADO": 1.10}
+        capex_referencia = capex_hint if capex_hint is not None else custo_obra_base
+        estado = classificar_estado(capex_referencia)
 
-        # Aplicar penalização no valor de venda pelo estado do imóvel
-        ref_venda *= fator_estado_venda.get(estado, 1.0)
+        fator_venda = {
+            "PRONTO": 1.00,
+            "LIGEIRO": 0.97,
+            "MEDIO": 0.93,
+            "PESADO": 0.88,
+            "DESCONHECIDO": 1.00
+        }
+
+        fator_liq = {
+            "PRONTO": 1.00,
+            "LIGEIRO": 1.02,
+            "MEDIO": 1.05,
+            "PESADO": 1.10,
+            "DESCONHECIDO": 1.00
+        }
+
+        # impacto no preço
+        ref_venda *= fator_venda.get(estado, 1.0)
         venda_liquida = ref_venda / margem_venda
 
-        # 5. Ajustes de Custo de Obra (TEU CÓDIGO + NOVO CAPEX)
-        if tipo == "TERRENO": custo_incidente = custo_obra_base * 0.15
-        elif tipo == "GEMINADA": custo_incidente = custo_obra_base * 0.90
-        elif tipo == "GEMINADA_PONTA": custo_incidente = custo_obra_base * 0.95
-        elif tipo == "TERREA_GEMINADA": custo_incidente = custo_obra_base * 0.95
-        elif tipo == "TERREA_INDEPENDENTE": custo_incidente = custo_obra_base * 1.10
-        elif tipo == "INDEPENDENTE": custo_incidente = custo_obra_base * 1.10
-        else: custo_incidente = custo_obra_base
+        # 5. CUSTO OBRA BASE (TIPO)
+        if tipo == "TERRENO":
+            custo_incidente = custo_obra_base * 0.15
+        elif tipo == "GEMINADA":
+            custo_incidente = custo_obra_base * 0.90
+        elif tipo == "GEMINADA_PONTA":
+            custo_incidente = custo_obra_base * 0.95
+        elif tipo == "TERREA_GEMINADA":
+            custo_incidente = custo_obra_base * 0.95
+        elif tipo == "TERREA_INDEPENDENTE":
+            custo_incidente = custo_obra_base * 1.10
+        elif tipo == "INDEPENDENTE":
+            custo_incidente = custo_obra_base * 1.10
+        else:
+            custo_incidente = custo_obra_base
 
-        # Somamos o Capex extraído do título ao custo incidente da tipologia
-        custo_total_obra = custo_incidente + capex_hint
+        # soma segura
+        capex_extra = capex_hint if capex_hint is not None else 0
+        custo_total_obra = custo_incidente + capex_extra
 
-        # 6. Cálculo do Teto com Penalização de Liquidez (NOVA LÓGICA)
-        teto_compra_base = (venda_liquida - custo_total_obra) / (1 + margem_flip)
-        teto_final = teto_compra_base / penalizacao_liquidez.get(estado, 1.0)
-        
-        # 7. Ratio e Estrelas (TEU CÓDIGO)
+        # 6. TETO
+        teto_base = (venda_liquida - custo_total_obra) / (1 + margem_flip)
+        teto_final = teto_base / fator_liq.get(estado, 1.0)
+
+        if teto_final <= 0:
+            return 1
+
+        # 7. SCORE
         ratio = (preco / area) / teto_final
 
         if ratio <= 1.00: return 5
         if ratio <= 1.15: return 4
         if ratio <= 1.35: return 3
         return 2
+
     except:
         return 2
