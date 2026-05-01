@@ -402,16 +402,17 @@ elif st.session_state.page == "DETALHE":
         
         col_sim1, col_sim2 = st.columns(2)
         with col_sim1:
-            novo_capex = st.number_input("**Estimativa de Obra (€)**", value=float(capex_base), step=1000.0, format="%.2f")
+            # OCULTADO: Mudamos para 0.0 para não vazar a tua estimativa técnica
+            novo_capex = st.number_input("**Estimativa de Obra (€)**", value=0.0, step=1000.0, format="%.2f")
         
         with col_sim2:
-            valor_sugerido = float(exit_base) if exit_base > 0 else 0.0
-            novo_exit = st.number_input("**Preço de Venda Alvo (€)**", value=valor_sugerido, step=1000.0, format="%.2f")
+            # OCULTADO: Mudamos para 0.0 para não vazar o teu teto de venda
+            novo_exit = st.number_input("**Preço de Venda Alvo (€)**", value=0.0, step=1000.0, format="%.2f")
         
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Alerta de Análise (Apenas se não houver Exit Price na Sheet)
-        if exit_base == 0:
+        # Alerta de Análise (Apenas se os inputs estiverem a zero)
+        if novo_exit == 0:
             st.markdown(f"""
                 <div style="background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
                     border: 1px solid #bfa573; border-radius: 12px; padding: 15px; margin: 15px auto; max-width: 600px; 
@@ -421,20 +422,22 @@ elif st.session_state.page == "DETALHE":
                     </span><br>
                     <div style="width: 30px; height: 1px; background: #bfa573; margin: 8px auto;"></div>
                     <span style="color: #555; font-size: 11px; font-family: 'Inter', sans-serif;">
-                        Imóvel sob análise técnica. Os valores de projecção serão actualizados após validação de mercado e métricas 5D.
+                        Imóvel sob análise técnica. Insira valores acima para simular ou aguarde validação 5D.
                     </span>
                 </div>
             """, unsafe_allow_html=True)
 
-        # --- LÓGICA DE CÁLCULO ---
-        foi_simulado = (novo_capex != capex_base) or (novo_exit != valor_sugerido)
-        if novo_exit == 0:
-            lucro_estimado = 0.0
+        # --- LÓGICA DE CÁLCULO CORRIGIDA ---
+        # Só calcula lucro se o utilizador inserir um preço de venda
+        if novo_exit > 0:
+            # O lucro deve abater: Preço Lista + IMT/Selo (aprox 7%) + Obra Inserida
+            preco_lista = float(imovel.get("Preco_Listagem", 0))
+            impostos_aquisicao = preco_lista * 0.07
+            lucro_estimado = novo_exit - (preco_lista + impostos_aquisicao + novo_capex)
         else:
-            # Lucro = Venda - (Investimento Total atualizado pela nova estimativa de obra)
-            lucro_estimado = novo_exit - (invest_total - capex_base + novo_capex)
+            lucro_estimado = 0.0
         
-        # --- O TEU CARTÃO DE EFEITO VIDRO (RESTURADO) ---
+        # --- O TEU CARTÃO DE EFEITO VIDRO (PRESERVADO) ---
         st.markdown(f"""
             <div style="max-width: 600px; margin: 10px auto; display: flex; justify-content: center;">
                 <div style="text-align:center; padding: 25px; 
