@@ -73,6 +73,10 @@ def carregar_sistema_completo():
         # C. Normalização de Área Inteligente e Legenda de Qualidade
         df_leads["Area_m2"] = df_leads.apply(get_area_real, axis=1)
         df_leads["Area_Qualidade"] = df_leads.apply(get_area_qualidade, axis=1)
+
+        # D.1 CAPEX + ESTADO (NOVO - não quebra nada)
+        df_leads["CAPEX_Titulo"] = df_leads["Titulo"].apply(extrair_capex_do_titulo)
+        df_leads["Estado_Imovel"] = df_leads["CAPEX_Titulo"].apply(classificar_estado)
         
         # D. Cálculo do Score 5D (Agora com motor de custos e ajustes locais)
         df_leads["Score_Calculado"] = df_leads.apply(
