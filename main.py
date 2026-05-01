@@ -6,7 +6,15 @@ import time
 import requests
 import re
 import hashlib
-from utils import calcular_score, get_zona_label, identificar_tipologia, get_area_real, get_area_qualidade
+
+# 1. IMPORTS DO MOTOR TÉCNICO (Ajustado)
+from utils import (
+    calcular_score, 
+    identificar_tipologia, 
+    get_area_real, 
+    get_area_qualidade,
+    identificar_zona_e_ajuste
+)
 
 # ==========================================
 # 1. CONFIGURAÇÕES E ESTADO DA SESSÃO
@@ -19,19 +27,19 @@ st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="c
 
 # --- Funções de Suporte ---
 def get_base64(bin_file):
-    if os.path.exists(bin_file):
-        with open(bin_file, 'rb') as f:
-            return base64.b64encode(f.read()).decode()
-    return ""
+    if os.path.exists(bin_file):
+        with open(bin_file, 'rb') as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
 
 def safe_float(value):
-    if value is None or value == "": return 0.0
-    try:
-        val_str = str(value).replace("€","").replace("%","").replace(" ","").replace("\xa0","").strip()
-        if "." in val_str and "," in val_str: val_str = val_str.replace(".", "").replace(",", ".")
-        elif "," in val_str: val_str = val_str.replace(",", ".")
-        return float(val_str)
-    except: return 0.0
+    if value is None or value == "": return 0.0
+    try:
+        val_str = str(value).replace("€","").replace("%","").replace(" ","").replace("\xa0","").strip()
+        if "." in val_str and "," in val_str: val_str = val_str.replace(".", "").replace(",", ".")
+        elif "," in val_str: val_str = val_str.replace(",", ".")
+        return float(val_str)
+    except: return 0.0
 
 # ==========================================
 # 2. CÉREBRO 2026 - CARREGAMENTO E FILTROS
@@ -56,18 +64,20 @@ def carregar_sistema_completo():
             axis=1
         )
         
-        # C. Normalização de Área Inteligente
-        # Nota: Passamos a linha toda para o utils decidir entre Bruta/Util e aplicar rácios
+        # C. Normalização de Área Inteligente e Legenda de Qualidade
         df_leads["Area_m2"] = df_leads.apply(get_area_real, axis=1)
         df_leads["Area_Qualidade"] = df_leads.apply(get_area_qualidade, axis=1)
         
-        # D. Cálculo do Score 5D (Agora com o novo motor de custos e ajustes)
+        # D. Cálculo do Score 5D (Agora com motor de custos e ajustes locais)
         df_leads["Score_Calculado"] = df_leads.apply(
             lambda row: calcular_score(row, df_conf), 
             axis=1
         )
         
-        df_leads["Zona_Dinamica"] = df_leads["Localidade"].apply(get_zona_label)
+        # E. Zona Dinâmica (Ouro do Python: identifica e extrai o ID da Zona)
+        df_leads["Zona_Dinamica"] = df_leads["Localidade"].apply(
+            lambda x: identificar_zona_e_ajuste(x)[0]
+        )
         
         # Filtro de Activos para a Galeria Pública
         df_publico = df_leads[df_leads["Decisao"].str.upper().isin(["APROVADO", "SIM", "OK"])].copy()
@@ -83,60 +93,65 @@ df_quarentena, df = carregar_sistema_completo()
 query_params = st.query_params
 
 if query_params.get("ppkmor") == "7":
-    with st.expander("🔬 Radar de Metodologia 5D (Tabela de Auditoria)", expanded=True):
-        if not df_quarentena.empty:
+    with st.expander("🔬 Radar de Metodologia 5D (Tabela de Auditoria)", expanded=True):
+        if not df_quarentena.empty:
             df_view = df_quarentena.copy()
             
-            # 1. STATUS E CÁLCULO DE M2 REAL
+            # 1. STATUS E CÁLCULO DE M2 REAL (Agora com Proteção)
             df_view["Status"] = df_view["Decisao"].apply(
                 lambda x: "✅ LOJA" if str(x).upper() in ["APROVADO", "SIM", "OK"] else "⏳ QUARENTENA"
             )
-            df_view["€/m2"] = (df_view["Preco_Listagem"] / df_view["Area_m2"]).round(0)
+            
+            # Cálculo protegido para evitar erro de divisão por zero
+            df_view["€/m2"] = df_view.apply(
+                lambda x: (x["Preco_Listagem"] / x["Area_m2"]) if x["Area_m2"] > 0 else 0, 
+                axis=1
+            ).round(0)
             
             # 2. COLUNAS QUE ESTAVAM "ESCONDIDAS" (Ouro do Python)
-            # Vamos garantir que vês o que o utils projetou
+            # Adicionamos "Zona_Dinamica" e "Area_Qualidade" para auditoria técnica
             colunas_foco = [
-                "Status", "Score_Calculado", "Tipologia", "Localidade", 
+                "Status", "Score_Calculado", "Tipologia", "Localidade", "Zona_Dinamica",
                 "Preco_Listagem", "Area_m2", "€/m2", "Area_Qualidade", 
                 "Referencia"
             ]
-            
-            # Adiciona colunas de simulação se elas existirem no teu processamento
-            for col in ["Preco_Exit", "CAPEX_Estimado", "Investimento_Total"]:
-                if col in df_view.columns:
-                    colunas_foco.append(col)
+            
+            # Adiciona colunas de simulação se elas existirem no teu processamento
+            for col in ["Preco_Exit", "CAPEX_Estimado", "Investimento_Total"]:
+                if col in df_view.columns:
+                    colunas_foco.append(col)
 
-            st.dataframe(
-                df_view[colunas_foco].sort_values(by="Score_Calculado", ascending=False),
-                column_config={
-                    "Score_Calculado": st.column_config.NumberColumn("⭐ Score", format="%d/5"),
-                    "Preco_Listagem": st.column_config.NumberColumn("Preço (€)", format="%d €"),
-                    "Area_m2": st.column_config.NumberColumn("Área Final", format="%.0f m²"),
-                    "Preco_Exit": st.column_config.NumberColumn("Venda Alvo", format="%d €"),
-                    "CAPEX_Estimado": st.column_config.NumberColumn("Obra Est.", format="%d €"),
-                    "Area_Qualidade": st.column_config.TextColumn("Fonte"),
-                },
-                hide_index=True,
-                use_container_width=True
-            )
-            
-            # Seletor para abrires a ficha técnica de qualquer lead (mesmo as em quarentena)
-            escolha = st.selectbox("Analise específica:", 
-                                  options=df_view["Referencia"].unique(), 
-                                  index=None, 
-                                  placeholder="Escolha a Referência...")
-            
-            if escolha:
-                # Busca no df_view para garantir que encontras qualquer uma
-                lead_selecionada = df_view[df_view["Referencia"] == escolha].iloc[0]
-                if st.button(f"🚀 Abrir Ficha de {escolha}"):
-                    st.session_state.selected_imovel = lead_selecionada.to_dict()
-                    st.session_state.page = "DETALHE"
-                    st.rerun()
+            st.dataframe(
+                df_view[colunas_foco].sort_values(by="Score_Calculado", ascending=False),
+                column_config={
+                    "Score_Calculado": st.column_config.NumberColumn("⭐ Score", format="%d/5"),
+                    "Preco_Listagem": st.column_config.NumberColumn("Preço (€)", format="%d €"),
+                    "Area_m2": st.column_config.NumberColumn("Área Final", format="%.0f m²"),
+                    "Preco_Exit": st.column_config.NumberColumn("Venda Alvo", format="%d €"),
+                    "CAPEX_Estimado": st.column_config.NumberColumn("Obra Est.", format="%d €"),
+                    "Area_Qualidade": st.column_config.TextColumn("Fonte"),
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+            
+            # Seletor para abrires a ficha técnica de qualquer lead (mesmo as em quarentena)
+            escolha = st.selectbox("Analise específica:", 
+                                  options=df_view["Referencia"].unique(), 
+                                  index=None, 
+                                  placeholder="Escolha a Referência...")
+            
+            if escolha:
+                # Busca no df_view para garantir que encontras qualquer uma
+                lead_selecionada = df_view[df_view["Referencia"] == escolha].iloc[0]
+                if st.button(f"🚀 Abrir Ficha de {escolha}"):
+                    st.session_state.selected_imovel = lead_selecionada.to_dict()
+                    st.session_state.page = "DETALHE"
+                    st.rerun()
 else:
-    # Se o URL não tiver o código, o Python não processa nada disto. 
-    # Para o cliente, esta parte do site nem sequer existe.
-    pass
+    # Se o URL não tiver o código, o Python não processa nada disto. 
+    # Para o cliente, esta parte do site nem sequer existe.
+    pass
 # ==========================================
 # 3. COMPONENTES VISUAIS (CARROSSEL)
 # ==========================================
