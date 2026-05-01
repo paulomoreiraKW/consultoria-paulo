@@ -410,7 +410,7 @@ elif st.session_state.page == "DETALHE":
                         Projeção de Lucro Flip
                     </span><br>
                     <span style="color:#bfa573; font-size:42px; font-weight:bold; letter-spacing: -1px; text-shadow: 0px 0px 5px rgba(255,255,255,0.8);">
-                        {lucro_estimado:,.2f}€
+                        {f"{lucro_estimado:,.0f}".replace(",", " ")}€
                     </span>
                     <div style="width:40px; height:1px; background: rgba(0, 0, 0, 0.4); margin:15px auto;"></div>
                     <p style="color:#000; font-size:10px; margin:0; font-family: 'Courier New', Courier, monospace; font-weight: bold; opacity: 0.9;">
