@@ -33,16 +33,16 @@ def get_base64(bin_file):
     return ""
 
 def safe_float(value):
-    if value is None or value == "": 
+    if value is None or value == "":
         return 0.0
     try:
         val_str = str(value).replace("€","").replace("%","").replace(" ","").replace("\xa0","").strip()
-        if "." in val_str and "," in val_str: 
+        if "." in val_str and "," in val_str:
             val_str = val_str.replace(".", "").replace(",", ".")
-        elif "," in val_str: 
+        elif "," in val_str:
             val_str = val_str.replace(",", ".")
         return float(val_str)
-    except: 
+    except:
         return 0.0
 
 def safe_float(value):
