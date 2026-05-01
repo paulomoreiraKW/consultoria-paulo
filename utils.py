@@ -16,6 +16,15 @@ def normalizar(txt):
     txt = unicodedata.normalize("NFD", txt).encode("ascii", "ignore").decode("utf-8")
     return txt
 
+# --- NOVIDADE: A FUNÇÃO QUE FALTAVA ---
+def extrair_capex_do_titulo(titulo):
+    nome = normalizar(titulo)
+    if "s/capex" in nome or "s/ obra" in nome: return 0
+    if any(x in nome for x in ["total", "ruina", "reconstruir"]): return 900
+    if any(x in nome for x in ["remodelar", "c/capex", "c/ obra"]): return 450
+    if any(x in nome for x in ["pintura", "cosmetica", "ligeiro"]): return 150
+    return 0
+
 def identificar_zona_e_ajuste(localidade):
     loc = normalizar(localidade)
     zona = "ZONA_B_EXPANSAO" 
