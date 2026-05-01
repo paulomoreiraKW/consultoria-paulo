@@ -25,6 +25,15 @@ if "idx" not in st.session_state: st.session_state.idx = 0
 
 st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="centered")
 
+# --- Funções de Suporte ---
+def get_base64(bin_file):
+    import os
+    import base64
+    if os.path.exists(bin_file):
+        with open(bin_file, 'rb') as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
+
 def safe_float(value):
     if value is None or value == "":
         return 0.0
