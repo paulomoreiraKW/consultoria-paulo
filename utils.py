@@ -16,16 +16,30 @@ def normalizar(txt):
     txt = unicodedata.normalize("NFD", txt).encode("ascii", "ignore").decode("utf-8")
     return txt
 
-# --- NOVIDADE: A FUNÇÃO QUE FALTAVA ---
 def extrair_capex_do_titulo(titulo):
+    # Normalizar remove acentos e coloca em minúsculas
     nome = normalizar(titulo)
-    if "s/capex" in nome or "s/ obra" in nome: return 0
-    if any(x in nome for x in ["total", "ruina", "reconstruir"]): return 900
-    if any(x in nome for x in ["remodelar", "c/capex", "c/ obra"]): return 450
-    if any(x in nome for x in ["pintura", "cosmetica", "ligeiro"]): return 150
-    return none
-    
+
+    if not nome:
+        return None 
+
+    if "s/capex" in nome or "s/ obra" in nome:
+        return 0
+
+    if any(x in nome for x in ["total", "ruina", "reconstruir"]):
+        return 900
+
+    if any(x in nome for x in ["remodelar", "c/capex", "c/ obra"]):
+        return 450
+
+    if any(x in nome for x in ["pintura", "cosmetica", "ligeiro"]):
+        return 150
+
+    return None # Não assume 0, para não dar falso "Pronto"
+
 def classificar_estado(capex):
+    if capex is None:
+        return "DESCONHECIDO"
     if capex <= 0:
         return "PRONTO"
     elif capex <= 200:
@@ -34,6 +48,38 @@ def classificar_estado(capex):
         return "MEDIO"
     else:
         return "PESADO"
+
+def calcular_score(row, df_config):
+    try:
+        # ... (teu código anterior de limpeza de preço e área) ...
+        
+        # 1. Obter CAPEX do Título
+        titulo = row.get("Titulo", "")
+        capex_hint = extrair_capex_do_titulo(titulo)
+        
+        # 2. Definir CAPEX Final (Fallback para o custo da zona se o título for omisso)
+        # Se o título não diz nada, assume o custo de obra padrão da configuração da zona
+        capex_final = capex_hint if capex_hint is not None else custo_obra_base
+        
+        # 3. Classificar Estado Técnico
+        estado = classificar_estado(capex_final)
+        
+        # 4. Tabelas de Ajuste (Feel de Mercado)
+        fator_venda = {"PRONTO": 1.0, "LIGEIRO": 0.97, "MEDIO": 0.93, "PESADO": 0.88, "DESCONHECIDO": 1.0}
+        fator_liq = {"PRONTO": 1.0, "LIGEIRO": 1.02, "MEDIO": 1.05, "PESADO": 1.10, "DESCONHECIDO": 1.0}
+
+        # 5. Aplicar Fatores
+        ref_venda *= fator_venda.get(estado, 1.0)
+        venda_liquida = ref_venda / margem_venda
+        
+        # Teto de compra penalizado pela liquidez do estado
+        teto_base = (venda_liquida - capex_final) / (1 + margem_flip)
+        teto_final = teto_base / fator_liq.get(estado, 1.0)
+        
+        # ... (resto do teu cálculo de ratio e estrelas) ...
+        return score
+    except:
+        return 2
     
 def identificar_zona_e_ajuste(localidade):
     loc = normalizar(localidade)
