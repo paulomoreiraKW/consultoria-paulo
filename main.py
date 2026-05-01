@@ -86,22 +86,35 @@ if query_params.get("ppkmor") == "7":
     with st.expander("🔬 Radar de Metodologia 5D (Tabela de Auditoria)", expanded=True):
         if not df_quarentena.empty:
             df_view = df_quarentena.copy()
-            # Criar Status e Preço/m2 para tua análise rápida
+            
+            # 1. STATUS E CÁLCULO DE M2 REAL
             df_view["Status"] = df_view["Decisao"].apply(
                 lambda x: "✅ LOJA" if str(x).upper() in ["APROVADO", "SIM", "OK"] else "⏳ QUARENTENA"
             )
-            df_view["P_m2"] = (df_view["Preco_Listagem"] / df_view["Area_m2"]).round(2)
+            df_view["€/m2"] = (df_view["Preco_Listagem"] / df_view["Area_m2"]).round(0)
             
-            # Colunas que tu precisas de ver para decidir
-            colunas_foco = ["Status", "Score_Calculado", "Tipologia", "Titulo", "Localidade", "Preco_Listagem", "Area_m2", "Area_Qualidade", "Referencia"]
+            # 2. COLUNAS QUE ESTAVAM "ESCONDIDAS" (Ouro do Python)
+            # Vamos garantir que vês o que o utils projetou
+            colunas_foco = [
+                "Status", "Score_Calculado", "Tipologia", "Localidade", 
+                "Preco_Listagem", "Area_m2", "€/m2", "Area_Qualidade", 
+                "Referencia"
+            ]
             
+            # Adiciona colunas de simulação se elas existirem no teu processamento
+            for col in ["Preco_Exit", "CAPEX_Estimado", "Investimento_Total"]:
+                if col in df_view.columns:
+                    colunas_foco.append(col)
+
             st.dataframe(
-                df_final_view := df_view[colunas_foco].sort_values(by="Score_Calculado", ascending=False),
+                df_view[colunas_foco].sort_values(by="Score_Calculado", ascending=False),
                 column_config={
                     "Score_Calculado": st.column_config.NumberColumn("⭐ Score", format="%d/5"),
-                    "Preco_Listagem": st.column_config.NumberColumn("Preço (€)", format="%.2f€"),
-                    "Area_m2": st.column_config.NumberColumn("Área Final", format="%.1f m²"),
-                    "Area_Qualidade": st.column_config.TextColumn("Fonte da Área"),
+                    "Preco_Listagem": st.column_config.NumberColumn("Preço (€)", format="%d €"),
+                    "Area_m2": st.column_config.NumberColumn("Área Final", format="%.0f m²"),
+                    "Preco_Exit": st.column_config.NumberColumn("Venda Alvo", format="%d €"),
+                    "CAPEX_Estimado": st.column_config.NumberColumn("Obra Est.", format="%d €"),
+                    "Area_Qualidade": st.column_config.TextColumn("Fonte"),
                 },
                 hide_index=True,
                 use_container_width=True
