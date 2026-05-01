@@ -23,16 +23,17 @@ def extrair_capex_do_titulo(titulo):
     if any(x in nome for x in ["total", "ruina", "reconstruir"]): return 900
     if any(x in nome for x in ["remodelar", "c/capex", "c/ obra"]): return 450
     if any(x in nome for x in ["pintura", "cosmetica", "ligeiro"]): return 150
-    return 0
+    return none
     
 def classificar_estado(capex):
-    if capex == 0:
+    if capex <= 0:
         return "PRONTO"
-    if capex <= 200:
+    elif capex <= 200:
         return "LIGEIRO"
-    if capex <= 600:
+    elif capex <= 600:
         return "MEDIO"
-    return "PESADO"
+    else:
+        return "PESADO"
     
 def identificar_zona_e_ajuste(localidade):
     loc = normalizar(localidade)
