@@ -27,10 +27,23 @@ st.set_page_config(page_title="Paulo Moreira | Consultoria & Gestão", layout="c
 
 # --- Funções de Suporte ---
 def get_base64(bin_file):
-    if os.path.exists(bin_file):
-        with open(bin_file, 'rb') as f:
-            return base64.b64encode(f.read()).decode()
-    return ""
+    if os.path.exists(bin_file):
+        with open(bin_file, 'rb') as f:
+            return base64.b64encode(f.read()).decode()
+    return ""
+
+def safe_float(value):
+    if value is None or value == "": 
+        return 0.0
+    try:
+        val_str = str(value).replace("€","").replace("%","").replace(" ","").replace("\xa0","").strip()
+        if "." in val_str and "," in val_str: 
+            val_str = val_str.replace(".", "").replace(",", ".")
+        elif "," in val_str: 
+            val_str = val_str.replace(",", ".")
+        return float(val_str)
+    except: 
+        return 0.0
 
 def safe_float(value):
     if value is None or value == "": return 0.0
