@@ -122,9 +122,9 @@ if query_params.get("ppkmor") == "7":
             # Adicionamos "Zona_Dinamica" e "Area_Qualidade" para auditoria técnica
             colunas_foco = [
                 "Status", "Score_Calculado", "Tipologia", "Localidade", "Zona_Dinamica",
-                "Preco_Listagem", "Area_m2", "€/m2", "Area_Qualidade", 
-                "Referencia"
-            ]
+                "Preco_Listagem", "Area_m2", "€/m2", "Area_Qualidade","Estado_Imovel", 
+                "CAPEX_Titulo", "Referencia"
+                ]
             
             # Adiciona colunas de simulação se elas existirem no teu processamento
             for col in ["Preco_Exit", "CAPEX_Estimado", "Investimento_Total"]:
